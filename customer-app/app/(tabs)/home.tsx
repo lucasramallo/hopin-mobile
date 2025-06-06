@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import React from 'react';
 import { FlatList, Image, ImageBackground, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
@@ -15,16 +16,20 @@ const DATA = [
 ];
 
 export default function Home() {
+  const router = useRouter();
+
   const renderItem = ({ item }: { item: dataItem }) => (
     <View style={styles.card}>
       <Image
         source={require('../../assets/images/carIcon.png')}
-        style={{ width: 50, height: 50, marginRight: 10}}
+        style={{ width: 50, height: 50, marginRight: 10 }}
         resizeMode="contain"
       />
       <View style={styles.cardText}>
         <Text style={styles.cardTitle}>{item.title}</Text>
-        <Text style={styles.cardSubtitle}>{item.driver} - {item.price}</Text>
+        <Text style={styles.cardSubtitle}>
+          {item.driver} - {item.price}
+        </Text>
       </View>
     </View>
   );
@@ -35,6 +40,7 @@ export default function Home() {
         source={require('../../assets/images/home-background.png')}
         style={styles.map}
       >
+        <View style={styles.darkOverlay} />
         <View style={styles.header}>
           <Text style={styles.headerText}>HOPIN</Text>
           <TouchableOpacity>
@@ -43,11 +49,15 @@ export default function Home() {
         </View>
       </ImageBackground>
 
+      {/* bottomContainer agora é um modal fixo */}
       <View style={styles.bottomContainer}>
         <View style={styles.buttonRow}>
           <Text style={styles.titleText}>Onde quer ir?</Text>
-          <TouchableOpacity style={[styles.button, styles.newTripButton]}>
-            <Text style={[styles.newTripText]}>Nova Viagem</Text>
+          <TouchableOpacity
+            style={[styles.button, styles.newTripButton]}
+            onPress={() => router.replace('/newTrip')}
+          >
+            <Text style={[styles.buttonText, styles.newTripText]}>Nova Viagem</Text>
           </TouchableOpacity>
         </View>
 
@@ -67,6 +77,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
+  darkOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+  },
   map: {
     flex: 1,
     justifyContent: 'flex-start',
@@ -75,20 +89,28 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     padding: 20,
-    paddingTop: 60,
+    paddingTop: 70,
   },
   headerText: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: 'brack',
+    color: 'black',
   },
   bottomContainer: {
-    flex: 1,
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: '50%',
     backgroundColor: '#fff',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 30,
-    borderRadius: 30,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 5,
   },
   buttonRow: {
     flexDirection: 'row',
@@ -105,10 +127,10 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 10,
     marginRight: 10,
-    width: 120,
+    width: 140,
     height: 50,
     justifyContent: 'center',
-    alignItems: 'center',    
+    alignItems: 'center',
   },
   newTripButton: {
     backgroundColor: '#000',
@@ -121,7 +143,7 @@ const styles = StyleSheet.create({
   },
   newTripText: {
     color: '#fff',
-    fontWeight: 600,
+    fontWeight: '600',
   },
   card: {
     flexDirection: 'row',
@@ -130,9 +152,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#f9f9f9',
     borderRadius: 10,
     marginBottom: 10,
-  },
-  icon: {
-    marginRight: 10,
   },
   cardText: {
     flex: 1,
@@ -147,12 +166,5 @@ const styles = StyleSheet.create({
   },
   list: {
     flex: 1,
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    padding: 20,
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
   },
 });

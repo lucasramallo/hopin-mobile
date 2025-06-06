@@ -1,7 +1,7 @@
-import Entypo from '@expo/vector-icons/Entypo';
 import Feather from '@expo/vector-icons/Feather';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Tabs } from 'expo-router';
+
 
 export default function TabLayout() {
   return (
@@ -14,17 +14,17 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="lista"
+        name="tripsScreen"
         options={{
-          title: 'Lista',
-          tabBarIcon: ({ color }) => <Entypo name="list" size={24} color="black" />,
+          title: 'Corridas',
+          tabBarIcon: ({ color }) => <MaterialIcons name="route" size={24} color="black" />,
         }}
       />
       <Tabs.Screen
-        name="dispensa"
+        name="profileScreen"
         options={{
-        title: 'Dispensa',
-        tabBarIcon: ({ color }) => <MaterialIcons name="kitchen" size={24} color="black" />
+        title: 'Perfil',
+        tabBarIcon: ({ color }) => <Feather name="user" size={24} color="black" />
       }}
       />
     </Tabs>
