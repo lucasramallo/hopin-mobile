@@ -2,17 +2,20 @@ import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { FlatList, Image, ImageBackground, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
+type dataItem = {
+  id: string;
+  title: string;
+  driver: string;
+  price: string;
+};
+
 const DATA = [
   { id: '1', title: 'Earthcare scapes church god', driver: 'John Doe', price: 'R$ 30' },
   { id: '2', title: 'Earthcare scapes church god', driver: 'John Doe', price: 'R$ 30' },
 ];
 
-
-
 export default function Home() {
-
-  
-  const renderItem = ({ item }) => (
+  const renderItem = ({ item }: { item: dataItem }) => (
     <View style={styles.card}>
       <Image
         source={require('../../assets/images/carIcon.png')}
@@ -72,19 +75,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     padding: 20,
-    paddingTop: 50,
+    paddingTop: 60,
   },
   headerText: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#fff',
+    color: 'brack',
   },
   bottomContainer: {
     flex: 1,
     backgroundColor: '#fff',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    marginTop: -20,
     padding: 30,
     borderRadius: 30,
   },
