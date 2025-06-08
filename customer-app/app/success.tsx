@@ -1,10 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Button from './components/button';
 
 export default function SuccessScreen() {
+  const router = useRouter();
+  
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -41,7 +43,7 @@ export default function SuccessScreen() {
           </View>
         </View>
 
-        <Button href="/reviewScreen" title='Concluir'/>
+        <Button onPress={() => router.replace('/reviewScreen')} title='Concluir'/>
       </View>
     </View>
   );

@@ -1,19 +1,17 @@
-import { LinkProps, useRouter } from 'expo-router';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 type ButtonProps = {
   title: string;
-  href: LinkProps['href'];
   variant?: 'primary' | 'danger';
+  style?: {};
+  onPress?: () => void;
 };
 
-export default function Button({title, href, variant}: ButtonProps) {
-  const router = useRouter();
-
+export default function Button({title, variant, style, onPress}: ButtonProps) {
   return (
     <View style={styles.buttonContainer}>
-      <TouchableOpacity onPress={() => router.replace(href)} style={[styles.requestButton, variant === 'danger' && { backgroundColor: '#F3383B' }]}>
+      <TouchableOpacity onPress={onPress} style={[styles.requestButton, variant === 'danger' && { backgroundColor: '#F3383B' }, style]}>
         <Text style={styles.requestButtonText}>{title}</Text>
       </TouchableOpacity>
     </View>

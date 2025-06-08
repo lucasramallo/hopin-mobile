@@ -1,25 +1,72 @@
-import { useRouter } from 'expo-router';
-import React, { useEffect, useRef } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useEffect, useRef, useState } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import Button from './components/button';
+import { customerStorageService, Status, Trip } from './service/CustomerStorageService';
 
 export default function LoadingScreen() {
   const router = useRouter();
+  const { tripId } = useLocalSearchParams(); // Recuperar o tripId dos query parameters
   const progress = useRef(new Animated.Value(0)).current;
+  const [trip, setTrip] = useState<Trip | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchTrip = async () => {
+    if (typeof tripId !== 'string') {
+      setError('ID da viagem inválido');
+      return;
+    }
+
+    try {
+      const trips = await customerStorageService.getTrips();
+      const foundTrip = trips.find((t) => t.id === tripId);
+      if (foundTrip) {
+        setTrip(foundTrip);
+      } else {
+        setError('Viagem não encontrada');
+      }
+    } catch (error) {
+      console.error('Erro ao buscar viagem:', error);
+      setError('Erro ao buscar a viagem.');
+    }
+  };
 
   useEffect(() => {
-    Animated.timing(progress, {
-      toValue: 1,
-      duration: 5000,
-      useNativeDriver: false,
-    }).start();
+    let timer: ReturnType<typeof setTimeout>;
 
-    const timer = setTimeout(() => {
-      router.push('/success');
-    }, 6000);
+    const startLoading = async () => {
+      await fetchTrip();
 
-    return () => clearTimeout(timer);
-  }, [router]);
+      Animated.timing(progress, {
+        toValue: 1,
+        duration: 5000,
+        useNativeDriver: false,
+      }).start();
+
+      timer = setTimeout(() => {
+        router.push('/success');
+      }, 6000);
+    };
+
+    startLoading();
+
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [router, tripId]);
+
+  const handleCancelTrip = () => {
+    if (trip) {
+      const newTrip: Partial<Trip> & { id: string } = {
+        ...trip,
+        status: Status.CANCELED,
+      };
+
+      customerStorageService.updateTrip(newTrip);
+    }
+
+    router.replace('/home');
+  };
 
   return (
     <View style={styles.container}>
@@ -37,7 +84,12 @@ export default function LoadingScreen() {
           ]}
         />
       </View>
-      <Button title='Cancelar Viagem' href={'/home'} variant='danger'/>
+      <Button
+        title="Cancelar Viagem"
+        onPress={handleCancelTrip}
+        variant="danger"
+      />
+      {error && <Text style={styles.errorText}>{error}</Text>}
     </View>
   );
 }
@@ -48,12 +100,28 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#fff',
+    padding: 20,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
     color: '#000',
+  },
+  tripDetails: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  detailText: {
+    fontSize: 16,
+    marginVertical: 5,
+    color: '#333',
+  },
+  errorText: {
+    fontSize: 16,
+    color: 'red',
+    marginTop: 20,
+    textAlign: 'center',
   },
   progressBarContainer: {
     width: '80%',

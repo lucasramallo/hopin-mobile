@@ -1,38 +1,64 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import { FlatList, Image, ImageBackground, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-
-type dataItem = {
-  id: string;
-  title: string;
-  driver: string;
-  price: string;
-};
-
-const DATA = [
-  { id: '1', title: 'Earthcare scapes church god', driver: 'John Doe', price: 'R$ 30' },
-  { id: '2', title: 'Earthcare scapes church god', driver: 'John Doe', price: 'R$ 30' },
-];
+import { customerStorageService, Status, Trip } from '../service/CustomerStorageService';
 
 export default function Home() {
   const router = useRouter();
+  const [trips, setTrips] = useState<Trip[]>([]);
 
-  const renderItem = ({ item }: { item: dataItem }) => (
-    <View style={styles.card}>
-      <Image
-        source={require('../../assets/images/carIcon.png')}
-        style={{ width: 50, height: 50, marginRight: 10 }}
-        resizeMode="contain"
-      />
-      <View style={styles.cardText}>
-        <Text style={styles.cardTitle}>{item.title}</Text>
-        <Text style={styles.cardSubtitle}>
-          {item.driver} - {item.price}
-        </Text>
-      </View>
-    </View>
+  useFocusEffect(
+    useCallback(() => {
+      const fetchTrips = async () => {
+        try {
+          const fetchedTrips = await customerStorageService.getTrips();
+
+          const recentTrips = fetchedTrips.slice(0, 3);
+          setTrips(recentTrips);
+        } catch (error) {
+          console.error('Failed to fetch trips:', error);
+          setTrips([]);
+        }
+      };
+
+      fetchTrips();
+    }, [])
   );
+
+  const renderItem = ({ item }: { item: Trip }) => {
+    const isCanceled = item.status === Status.CANCELED;
+    console.log(isCanceled)
+
+    return (
+      <View style={[styles.card, isCanceled && { opacity: 0.5 }]}>
+        <Image
+          source={require('../../assets/images/carIcon.png')}
+          style={{ width: 50, height: 50, marginRight: 10 }}
+          resizeMode="contain"
+        />
+        <View style={styles.cardText}>
+          <Text style={styles.cardTitle}>
+            {item.origin} to {item.destination}
+          </Text>
+          <Text style={styles.cardSubtitle}>
+            {item.driver.name} - {item.payment.amount} {item.payment.currency}
+          </Text>
+          {isCanceled ? (
+            <Text style={{ color: 'red', marginTop: 5, fontWeight: 'bold' }}>
+              CANCELADA
+            </Text>
+          ) :
+            <Text style={{ color: 'green', marginTop: 5, fontWeight: 'bold' }}>
+              {item.status}
+            </Text>
+          }
+        </View>
+      </View>
+    );
+  };
+
 
   return (
     <View style={styles.container}>
@@ -49,7 +75,6 @@ export default function Home() {
         </View>
       </ImageBackground>
 
-      {/* bottomContainer agora é um modal fixo */}
       <View style={styles.bottomContainer}>
         <View style={styles.buttonRow}>
           <Text style={styles.titleText}>Onde quer ir?</Text>
@@ -62,10 +87,11 @@ export default function Home() {
         </View>
 
         <FlatList
-          data={DATA}
+          data={trips}
           renderItem={renderItem}
           keyExtractor={(item) => item.id}
           style={styles.list}
+          ListEmptyComponent={<Text style={styles.cardSubtitle}>No trips found</Text>}
         />
       </View>
     </View>

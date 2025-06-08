@@ -45,7 +45,7 @@ export default function ReviewScreen() {
           />
         </View>
 
-        <Button href={'/home'} title="Avaliar"/>
+        <Button onPress={() => router.replace('/home')} title="Avaliar"/>
       </View>
     </View>
   );
