@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { v4 as uuidv4 } from 'uuid';
 
 enum Role {
   USER = 'USER',
@@ -31,7 +32,7 @@ interface Trip {
   origin: string;
   destination: string;
   rating?: number;
-  createdAt: string; // ISO string for LocalDateTime
+  createdAt: string;
 }
 
 interface Customer {
@@ -39,7 +40,7 @@ interface Customer {
   name: string;
   email: string;
   password: string;
-  createdAt: string; // ISO string for LocalDateTime
+  createdAt: string;
   role: Role;
   creditCardNumber?: string;
   creditCardExpiry?: string;
@@ -50,7 +51,6 @@ interface Customer {
 const CUSTOMER_KEY = '@CurrentCustomer';
 
 class CustomerStorageService {
-  // Save the current customer to AsyncStorage
   async saveCustomer(customer: Customer): Promise<void> {
     try {
       const customerJson = JSON.stringify(customer);
@@ -61,7 +61,6 @@ class CustomerStorageService {
     }
   }
 
-  // Retrieve the current customer from AsyncStorage
   async getCustomer(): Promise<Customer | null> {
     try {
       const customerJson = await AsyncStorage.getItem(CUSTOMER_KEY);
@@ -75,7 +74,6 @@ class CustomerStorageService {
     }
   }
 
-  // Clear the current customer from AsyncStorage (e.g., on logout)
   async clearCustomer(): Promise<void> {
     try {
       await AsyncStorage.removeItem(CUSTOMER_KEY);
@@ -85,8 +83,7 @@ class CustomerStorageService {
     }
   }
 
-  // Save a new trip for the current customer
-  async addTrip(trip: Omit<Trip, 'createdAt'>): Promise<void> {
+  async addTrip(trip: Omit<Trip, 'createdAt' | 'driver'>): Promise<void> {
     try {
       const customer = await this.getCustomer();
       if (!customer) {
@@ -95,6 +92,7 @@ class CustomerStorageService {
 
       const newTrip: Trip = {
         ...trip,
+        driver: { id: uuidv4(), name: 'Jane Driver' },
 
         createdAt: new Date().toISOString(),
       };
@@ -118,7 +116,7 @@ class CustomerStorageService {
         if (trip.id === updatedTrip.id) {
           return {
             ...trip,
-            ...updatedTrip, // sobrescreve apenas os campos passados
+            ...updatedTrip,
           };
         }
         return trip;
@@ -133,7 +131,6 @@ class CustomerStorageService {
   }
 
 
-  // Retrieve all trips for the current customer
   async getTrips(): Promise<Trip[]> {
     try {
       const customer = await this.getCustomer();

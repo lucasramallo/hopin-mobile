@@ -3,10 +3,12 @@ import { Link, useRouter } from 'expo-router';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Button from './components/button';
+import useStore from './store/index';
 
 export default function SuccessScreen() {
   const router = useRouter();
-  
+  const currentTrip = useStore((state) => state.trip);
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -27,11 +29,11 @@ export default function SuccessScreen() {
           </View>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>De</Text>
-            <Text style={styles.summaryValue}>Earthcare scapes</Text>
+            <Text style={styles.summaryValue}>{currentTrip?.origin}</Text>
           </View>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Para</Text>
-            <Text style={styles.summaryValue}>Earthcare scapes</Text>
+            <Text style={styles.summaryValue}>{currentTrip?.destination}</Text>
           </View>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Distância</Text>
@@ -39,11 +41,11 @@ export default function SuccessScreen() {
           </View>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Total</Text>
-            <Text style={styles.summaryValue}>R$ 30</Text>
+            <Text style={styles.summaryValue}>{`R$ ${currentTrip?.payment.amount}`}</Text>
           </View>
         </View>
 
-        <Button onPress={() => router.replace('/reviewScreen')} title='Concluir'/>
+        <Button onPress={() => router.replace('/reviewScreen')} title='Concluir' />
       </View>
     </View>
   );

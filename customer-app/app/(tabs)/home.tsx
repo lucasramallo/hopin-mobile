@@ -15,7 +15,7 @@ export default function Home() {
         try {
           const fetchedTrips = await customerStorageService.getTrips();
 
-          const recentTrips = fetchedTrips.slice(0, 3);
+          const recentTrips = fetchedTrips.reverse().slice(0, 3);
           setTrips(recentTrips);
         } catch (error) {
           console.error('Failed to fetch trips:', error);
@@ -29,7 +29,6 @@ export default function Home() {
 
   const renderItem = ({ item }: { item: Trip }) => {
     const isCanceled = item.status === Status.CANCELED;
-    console.log(isCanceled)
 
     return (
       <View style={[styles.card, isCanceled && { opacity: 0.5 }]}>
@@ -40,7 +39,7 @@ export default function Home() {
         />
         <View style={styles.cardText}>
           <Text style={styles.cardTitle}>
-            {item.origin} to {item.destination}
+            {item.origin} - {item.destination}
           </Text>
           <Text style={styles.cardSubtitle}>
             {item.driver.name} - {item.payment.amount} {item.payment.currency}
@@ -94,6 +93,7 @@ export default function Home() {
           ListEmptyComponent={<Text style={styles.cardSubtitle}>No trips found</Text>}
         />
       </View>
+
     </View>
   );
 }

@@ -1,11 +1,20 @@
 import { Ionicons } from '@expo/vector-icons';
+import { Picker } from '@react-native-picker/picker';
 import { Link, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Image, ImageBackground, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import {
+  Animated,
+  Image,
+  ImageBackground,
+  StyleSheet,
+  Text,
+  View
+} from 'react-native';
 import 'react-native-get-random-values';
 import { v4 as uuidv4 } from 'uuid';
 import Button from './components/button';
 import { customerStorageService, Status } from './service/CustomerStorageService';
+import useStore from './store/index';
 
 export default function TripRequestScreen() {
   const router = useRouter();
@@ -17,7 +26,30 @@ export default function TripRequestScreen() {
   const [time, setTime] = useState(0);
   const [price, setPrice] = useState(0);
   const [distance, setDistance] = useState(0);
+  const [driverName, setDriverName] = useState(getRandomDriverName());
 
+  const setCurrentTrip = useStore((state) => state.setCurrentTrip);
+
+  const streetOptions = [
+    'Rua das Flores, 123 - Centro',
+    'Avenida Central, 500 - Jardim América',
+    'Rua dos Andradas, 215 - São José',
+    'Rua São João, 87 - Bela Vista',
+    'Travessa da Paz, 12 - Vila Nova',
+    'Rua Dom Pedro, 310 - Centro',
+    'Avenida Brasil, 980 - Morumbi',
+    'Rua XV de Novembro, 143 - Centro',
+    'Rua Getúlio Vargas, 250 - Alto Alegre',
+    'Rua Marechal Deodoro, 98 - Vila Rica',
+    'Rua das Palmeiras, 77 - São Bento',
+    'Rua Amazonas, 331 - Santa Luzia',
+    'Rua Ceará, 44 - Nova Esperança',
+    'Rua Rio Branco, 68 - Liberdade',
+    'Rua Padre Cícero, 55 - Centro',
+    'Rua Santa Maria, 302 - Jardim Botânico',
+    'Rua Tiradentes, 101 - São Francisco',
+    'Rua Alagoas, 90 - Bela Vista',
+  ];
 
   useEffect(() => {
     if (requested) {
@@ -39,68 +71,52 @@ export default function TripRequestScreen() {
   }, [requested]);
 
   const handleGenerateTrip = () => {
-    // Simular geração de dados de viagem
-    const simulatedTime = Math.floor(Math.random() * 10) + 1; // Tempo entre 1 e 10 minutos
-    const simulatedPrice = Math.floor(Math.random() * 50) + 10; // Preço entre R$10 e R$60
-    const simulatedDistance = Math.floor(Math.random() * 20) + 1; // Distância entre 1 e 20 Km
+    const simulatedTime = Math.floor(Math.random() * 10) + 1;
+    const simulatedPrice = Math.floor(Math.random() * 50) + 10;
+    const simulatedDistance = Math.floor(Math.random() * 20) + 1;
 
     setTime(simulatedTime);
     setPrice(simulatedPrice);
     setDistance(simulatedDistance);
-
-    // Marcar a viagem como solicitada
     setRequested(true);
+  };
+
+  function getRandomDriverName(): string {
+    const firstNames = ['Carlos', 'Ana', 'João', 'Mariana', 'Pedro', 'Luana'];
+    const lastNames = ['Silva', 'Santos', 'Oliveira', 'Souza', 'Lima'];
+    const randomFirst = firstNames[Math.floor(Math.random() * firstNames.length)];
+    const randomLast = lastNames[Math.floor(Math.random() * lastNames.length)];
+    return `${randomFirst} ${randomLast}`;
   }
 
   const handleTripRequest = async () => {
     try {
       if (!origin || !destination) {
-        alert('Por favor, preencha origem e destino.');
+        alert('Por favor, selecione origem e destino.');
         return;
       }
 
-      //  const newCustomer: Customer = {
-      //    id: uuidv4(),
-      //    name: 'John Doe',
-      //    email: 'john.doe@example.com',
-      //    password: 'securepassword',
-      //    createdAt: new Date().toISOString(),
-      //    role: Role.USER,
-      //    creditCardNumber: '1234-5678-9012-3456',
-      //    creditCardExpiry: '12/25',
-      //    creditCardCVV: '123',
-      //    trips: [],
-      //  };
-
-      // Save customer
-      //  await customerStorageService.saveCustomer(newCustomer);
-
-      // Obter o cliente atual
       const customer = await customerStorageService.getCustomer();
       if (!customer) {
         alert('Nenhum cliente logado. Faça login antes de solicitar uma viagem.');
         return;
       }
 
-      let tripId = uuidv4();
+      const tripId = uuidv4();
 
-      // Adicionar viagem
-      console.log('Iniciando addTrip');
-      await customerStorageService.addTrip({
+      await setCurrentTrip({
         id: tripId,
-        customerId: customer.id, // Usar o id do cliente resolvido
-        driver: { id: uuidv4(), name: 'Jane Driver' },
+        customerId: customer.id,
+        driver: { id: uuidv4(), name: driverName },
         status: Status.COMPLETED,
-        origin: origin,
+        origin,
         payment: { amount: price, currency: 'BRL' },
-        destination: destination,
+        destination,
+        createdAt: new Date().toISOString(),
       });
-      console.log('addTrip concluído');
 
-      // Navegar para loadingScreen
-      console.log('Navegando para /loadingScreen');
       router.replace({
-        pathname: '/loadingScreen',
+        pathname: '/loadingTripScreen',
         params: { tripId },
       });
     } catch (error) {
@@ -109,82 +125,61 @@ export default function TripRequestScreen() {
     }
   };
 
-  const requestedTrip = () => {
-    return (
-      <View style={styles.bottomContainer}>
-        <View style={styles.driverCard}>
-          <Image
-            source={require('../assets/images/carIcon.png')}
-            style={styles.carImage}
-            resizeMode="contain"
-          />
-          <View style={styles.driverInfo}>
-            <Text style={styles.driverName}>John Doe</Text>
-            <Text style={styles.pricePerKm}>Preço: R$5/Km</Text>
-            <View style={styles.rating}>
-              {[...Array(5)].map((_, index) => (
-                <Ionicons key={index} name="star" size={16} color="#FFD700" />
-              ))}
-            </View>
+  const requestedTrip = () => (
+    <View style={styles.bottomContainer}>
+      <View style={styles.driverCard}>
+        <Image source={require('../assets/images/carIcon.png')} style={styles.carImage} resizeMode="contain" />
+        <View style={styles.driverInfo}>
+          <Text style={styles.driverName}>{driverName}</Text>
+          <Text style={styles.pricePerKm}>Preço: R$5/Km</Text>
+          <View style={styles.rating}>
+            {[...Array(5)].map((_, index) => (
+              <Ionicons key={index} name="star" size={16} color="#FFD700" />
+            ))}
           </View>
         </View>
-
-        <View style={styles.tripDetails}>
-          <View style={styles.detailItem}>
-            <Text style={styles.detailValue}>{`${time} min`}</Text>
-          </View>
-          <View style={styles.detailItem}>
-            <Text style={styles.detailValue}>{`R$${price}`}</Text>
-          </View>
-          <View style={styles.detailItem}>
-            <Text style={styles.detailValue}>{`${distance} km`}</Text>
-          </View>
-        </View>
-
-        <Button onPress={handleTripRequest} title="Solicitar" />
       </View>
-    );
-  };
+
+      <View style={styles.tripDetails}>
+        <View style={styles.detailItem}><Text style={styles.detailValue}>{`${time} min`}</Text></View>
+        <View style={styles.detailItem}><Text style={styles.detailValue}>{`R$${price}`}</Text></View>
+        <View style={styles.detailItem}><Text style={styles.detailValue}>{`${distance} km`}</Text></View>
+      </View>
+
+      <Button onPress={handleTripRequest} title="Solicitar" />
+    </View>
+  );
 
   return (
     <View style={styles.container}>
       <ImageBackground source={require('../assets/images/home-background.png')} style={styles.map}>
         <View style={styles.darkOverlay} />
         <View style={styles.header}>
-          <Link href="/home">
-            <Ionicons name="arrow-back" size={24} color="black" />
-          </Link>
+          <Link href="/home"><Ionicons name="arrow-back" size={24} color="black" /></Link>
         </View>
 
         {!requested ? (
           <View style={styles.locationCard}>
-            <View style={styles.locationRow}>
-              <Ionicons name="location-sharp" size={24} color="#000" style={styles.locationIcon} />
-              <Text style={styles.locationText}>De</Text>
-              <TextInput
-                placeholder="Origem"
-                style={styles.input}
-                value={origin}
-                onChangeText={(value) => setOrigin(value)}
-              />
-              <TouchableOpacity>
-                <Ionicons name="add" size={24} color="#000" />
-              </TouchableOpacity>
+            <Text style={{ fontWeight: 'bold', marginBottom: 10 }}>Origem</Text>
+            <View style={styles.pickerContainer}>
+              <Picker selectedValue={origin} onValueChange={(itemValue) => setOrigin(itemValue)}>
+                <Picker.Item label="Selecione uma rua..." value="" />
+                {streetOptions.map((street, index) => (
+                  <Picker.Item key={index} label={street} value={street} />
+                ))}
+              </Picker>
             </View>
-            <View style={styles.divider} />
-            <View style={styles.locationRow}>
-              <Ionicons name="location-sharp" size={24} color="#000" style={styles.locationIcon} />
-              <Text style={styles.locationText}>Para</Text>
-              <TextInput
-                placeholder="Destino"
-                style={styles.input}
-                value={destination}
-                onChangeText={(value) => setDestination(value)}
-              />
-              <TouchableOpacity>
-                <Ionicons name="add" size={24} color="#000" />
-              </TouchableOpacity>
+
+            <Text style={{ fontWeight: 'bold', marginTop: 15, marginBottom: 10 }}>Destino</Text>
+            <View style={styles.pickerContainer}>
+              <Picker selectedValue={destination} onValueChange={(itemValue) => setDestination(itemValue)}>
+                <Picker.Item label="Selecione uma rua..." value="" />
+                {streetOptions.map((street, index) => (
+                  <Picker.Item key={index} label={street} value={street} />
+                ))}
+              </Picker>
             </View>
+
             <Button title="Confirmar" onPress={handleGenerateTrip} style={{ marginTop: 15 }} />
           </View>
         ) : (
@@ -220,8 +215,10 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingTop: 50,
   },
-  input: {
-    width: 200,
+  pickerContainer: {
+    backgroundColor: '#f2f2f2',
+    borderRadius: 8,
+    padding: 4,
   },
   locationCard: {
     backgroundColor: '#fff',
@@ -229,29 +226,6 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     padding: 15,
     marginTop: 20,
-  },
-  locationRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 5,
-  },
-  locationIcon: {
-    marginRight: 10,
-  },
-  locationText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    width: 50,
-  },
-  locationValue: {
-    fontSize: 16,
-    fontWeight: '400',
-    flex: 1,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#eee',
-    marginVertical: 10,
   },
   bottomContainer: {
     flex: 1,

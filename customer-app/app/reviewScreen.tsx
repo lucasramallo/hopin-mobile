@@ -4,10 +4,27 @@ import React, { useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import StarRating from 'react-native-star-rating-widget';
 import Button from './components/button';
+import { customerStorageService } from './service/CustomerStorageService';
+import useStore from './store/index';
 
 export default function ReviewScreen() {
   const router = useRouter();
   const [rating, setRating] = useState(0);
+
+  const currentTrip = useStore((state) => state.trip);
+  const resetCurrentTrip = useStore((state) => state.resetCurrentTrip);
+
+  const handleSubmit = () => {
+    if (currentTrip) {
+      const updatedTrip = {
+        ...currentTrip,
+        rating: rating,
+      };
+      customerStorageService.updateTrip(updatedTrip);
+      resetCurrentTrip();
+      router.replace('/home');
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -45,7 +62,7 @@ export default function ReviewScreen() {
           />
         </View>
 
-        <Button onPress={() => router.replace('/home')} title="Avaliar"/>
+        <Button onPress={handleSubmit} title="Avaliar" />
       </View>
     </View>
   );
