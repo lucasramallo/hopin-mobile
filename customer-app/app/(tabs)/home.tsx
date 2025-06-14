@@ -27,6 +27,13 @@ export default function Home() {
     }, [])
   );
 
+  function truncateString(text: string): string {
+    const maxLength = 30;
+    if (text.length <= maxLength) return text;
+    return text.slice(0, maxLength - 3) + '...';
+  }
+
+
   const renderItem = ({ item }: { item: Trip }) => {
     const isCanceled = item.status === Status.CANCELED;
 
@@ -39,7 +46,7 @@ export default function Home() {
         />
         <View style={styles.cardText}>
           <Text style={styles.cardTitle}>
-            {item.origin} - {item.destination}
+            {truncateString(item.origin)} {truncateString(item.destination)}
           </Text>
           <Text style={styles.cardSubtitle}>
             {item.driver.name} - {item.payment.amount} {item.payment.currency}

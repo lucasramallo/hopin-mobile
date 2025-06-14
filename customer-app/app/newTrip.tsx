@@ -5,7 +5,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   Animated,
   Image,
-  ImageBackground,
   StyleSheet,
   Text,
   View
@@ -13,6 +12,7 @@ import {
 import 'react-native-get-random-values';
 import { v4 as uuidv4 } from 'uuid';
 import Button from './components/button';
+import MapScreen, { Region } from './components/map';
 import { customerStorageService, Status } from './service/CustomerStorageService';
 import useStore from './store/index';
 
@@ -30,25 +30,99 @@ export default function TripRequestScreen() {
 
   const setCurrentTrip = useStore((state) => state.setCurrentTrip);
 
-  const streetOptions = [
-    'Rua das Flores, 123 - Centro',
-    'Avenida Central, 500 - Jardim América',
-    'Rua dos Andradas, 215 - São José',
-    'Rua São João, 87 - Bela Vista',
-    'Travessa da Paz, 12 - Vila Nova',
-    'Rua Dom Pedro, 310 - Centro',
-    'Avenida Brasil, 980 - Morumbi',
-    'Rua XV de Novembro, 143 - Centro',
-    'Rua Getúlio Vargas, 250 - Alto Alegre',
-    'Rua Marechal Deodoro, 98 - Vila Rica',
-    'Rua das Palmeiras, 77 - São Bento',
-    'Rua Amazonas, 331 - Santa Luzia',
-    'Rua Ceará, 44 - Nova Esperança',
-    'Rua Rio Branco, 68 - Liberdade',
-    'Rua Padre Cícero, 55 - Centro',
-    'Rua Santa Maria, 302 - Jardim Botânico',
-    'Rua Tiradentes, 101 - São Francisco',
-    'Rua Alagoas, 90 - Bela Vista',
+  const streetOptions: Region[] = [
+    {
+      "name": "Rua José de Almeida, 300 - Catolé, Campina Grande",
+      "latitude": -7.2410,
+      "longitude": -35.8700,
+      "latitudeDelta": 0.0922,
+      "longitudeDelta": 0.0421
+    },
+    {
+      "name": "Rua Manoel Firmino da Silva, 150 - Malvinas, Campina Grande",
+      "latitude": -7.2550,
+      "longitude": -35.8950,
+      "latitudeDelta": 0.0922,
+      "longitudeDelta": 0.0421
+    },
+    {
+      "name": "Rua Antônio Luiz de França, 200 - Bodocongó, Campina Grande",
+      "latitude": -7.2300,
+      "longitude": -35.8500,
+      "latitudeDelta": 0.0922,
+      "longitudeDelta": 0.0421
+    },
+    {
+      "name": "Rua Severino José da Silva, 100 - Universitário, Campina Grande",
+      "latitude": -7.2150,
+      "longitude": -35.9100,
+      "latitudeDelta": 0.0922,
+      "longitudeDelta": 0.0421
+    },
+    {
+      "name": "Rua José Guedes Cavalcanti, 250 - Mirante, Campina Grande",
+      "latitude": -7.2050,
+      "longitude": -35.8900,
+      "latitudeDelta": 0.0922,
+      "longitudeDelta": 0.0421
+    },
+    {
+      "name": "Rua Aprígio Nepomuceno, 200 - Palmeira, Campina Grande",
+      "latitude": -7.2200,
+      "longitude": -35.8650,
+      "latitudeDelta": 0.0922,
+      "longitudeDelta": 0.0421
+    },
+    {
+      "name": "Rua José Paulino, 150 - Dinamérica, Campina Grande",
+      "latitude": -7.2450,
+      "longitude": -35.8850,
+      "latitudeDelta": 0.0922,
+      "longitudeDelta": 0.0421
+    },
+    {
+      "name": "Rua Maria José da Silva, 200 - Sandra Cavalcante, Campina Grande",
+      "latitude": -7.2100,
+      "longitude": -35.8700,
+      "latitudeDelta": 0.0922,
+      "longitudeDelta": 0.0421
+    },
+    {
+      "name": "Rua Carlos Agra de Melo, 180 - Alto Branco, Campina Grande",
+      "latitude": -7.2000,
+      "longitude": -35.8800,
+      "latitudeDelta": 0.0922,
+      "longitudeDelta": 0.0421
+    },
+    {
+      "name": "Rua João Batista de Almeida, 250 - Lauritzen, Campina Grande",
+      "latitude": -7.2500,
+      "longitude": -35.8800,
+      "latitudeDelta": 0.0922,
+      "longitudeDelta": 0.0421
+    },
+    // New locations below
+    {
+      "name": "Rua José Domingos da Silva, 200 - Malvinas, Campina Grande",
+      "latitude": -7.2600,
+      "longitude": -35.9000,
+      "latitudeDelta": 0.0922,
+      "longitudeDelta": 0.0421
+    },
+    {
+      "name": "Rua Maria das Neves Ferreira, 150 - Cidades, Campina Grande",
+      "latitude": -7.2400,
+      "longitude": -35.9050,
+      "latitudeDelta": 0.0922,
+      "longitudeDelta": 0.0421
+    },
+    {
+      "name": "Rua Antônio Bezerra Cabral, 300 - Cruzeiro, Campina Grande",
+      "latitude": -7.2550,
+      "longitude": -35.8750,
+      "latitudeDelta": 0.0922,
+      "longitudeDelta": 0.0421
+    }
   ];
 
   useEffect(() => {
@@ -152,44 +226,32 @@ export default function TripRequestScreen() {
 
   return (
     <View style={styles.container}>
-      <ImageBackground source={require('../assets/images/home-background.png')} style={styles.map}>
-        <View style={styles.darkOverlay} />
-        <View style={styles.header}>
-          <Link href="/home"><Ionicons name="arrow-back" size={24} color="black" /></Link>
+      <MapScreen origin={streetOptions.find(street => street.name === origin) || streetOptions[0]} destination={streetOptions.find(street => street.name === destination) || streetOptions[0]} />
+      <View style={styles.header}>
+        <Link href="/home"><Ionicons name="arrow-back" size={24} color="black" /></Link>
+      </View>
+      <View style={styles.locationCard}>
+        <View style={styles.pickerContainer}>
+          <Picker selectedValue={origin} onValueChange={(itemValue) => setOrigin(itemValue)}>
+            <Picker.Item label="Selecione uma rua..." value="" />
+            {streetOptions.map((street, index) => (
+              <Picker.Item key={index} label={street.name} value={street.name} />
+            ))}
+          </Picker>
         </View>
 
-        {!requested ? (
-          <View style={styles.locationCard}>
-            <Text style={{ fontWeight: 'bold', marginBottom: 10 }}>Origem</Text>
-            <View style={styles.pickerContainer}>
-              <Picker selectedValue={origin} onValueChange={(itemValue) => setOrigin(itemValue)}>
-                <Picker.Item label="Selecione uma rua..." value="" />
-                {streetOptions.map((street, index) => (
-                  <Picker.Item key={index} label={street} value={street} />
-                ))}
-              </Picker>
-            </View>
+        <Text style={{ fontWeight: 'bold', marginTop: 15, marginBottom: 10 }}>Destino</Text>
+        <View style={styles.pickerContainer}>
+          <Picker selectedValue={destination} onValueChange={(itemValue) => setDestination(itemValue)}>
+            <Picker.Item label="Selecione uma rua..." value="" />
+            {streetOptions.map((street, index) => (
+              <Picker.Item key={index} label={street.name} value={street.name} />
+            ))}
+          </Picker>
+        </View>
 
-            <Text style={{ fontWeight: 'bold', marginTop: 15, marginBottom: 10 }}>Destino</Text>
-            <View style={styles.pickerContainer}>
-              <Picker selectedValue={destination} onValueChange={(itemValue) => setDestination(itemValue)}>
-                <Picker.Item label="Selecione uma rua..." value="" />
-                {streetOptions.map((street, index) => (
-                  <Picker.Item key={index} label={street} value={street} />
-                ))}
-              </Picker>
-            </View>
-
-            <Button title="Confirmar" onPress={handleGenerateTrip} style={{ marginTop: 15 }} />
-          </View>
-        ) : (
-          <Animated.Image
-            source={require('../assets/images/mapRadar.png')}
-            style={{ width: 280, height: 280, marginLeft: 33, opacity: fadeAnim }}
-            resizeMode="contain"
-          />
-        )}
-      </ImageBackground>
+        <Button title="Confirmar" onPress={handleGenerateTrip} style={{ marginTop: 15 }} />
+      </View>
 
       {requested && requestedTrip()}
     </View>
@@ -197,23 +259,23 @@ export default function TripRequestScreen() {
 }
 
 const styles = StyleSheet.create({
-  darkOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-  },
   container: {
     flex: 1,
     backgroundColor: '#fff',
   },
-  map: {
-    flex: 1,
-    justifyContent: 'flex-start',
+  darkOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     padding: 20,
     paddingTop: 50,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
   },
   pickerContainer: {
     backgroundColor: '#f2f2f2',
@@ -225,15 +287,18 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginHorizontal: 20,
     padding: 15,
-    marginTop: 20,
+    marginBottom: 100,
   },
   bottomContainer: {
-    flex: 1,
     backgroundColor: '#fff',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    marginTop: -20,
     padding: 20,
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingBottom: 100
   },
   driverCard: {
     flexDirection: 'row',

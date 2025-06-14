@@ -98,8 +98,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   summaryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     marginBottom: 10,
   },
   summaryLabel: {
