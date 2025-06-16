@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Image, StyleSheet, View } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 
@@ -122,56 +122,63 @@ const MapScreen: React.FC<Props> = ({
     }
   };
 
-  useEffect(() => {
-    if (
-      mapRegion.latitude !== origin.latitude ||
-      mapRegion.longitude !== origin.longitude ||
-      mapRegion.latitudeDelta !== origin.latitudeDelta ||
-      mapRegion.longitudeDelta !== origin.longitudeDelta ||
-      mapRegion.name !== origin.name
-    ) {
-      setMapRegion(origin);
+  const calculateRegion = (origin: Region, destination?: Region): Region => {
+    if (!destination) {
+      return {
+        ...origin,
+        latitudeDelta: 0.0922,
+        longitudeDelta: 0.0421,
+      };
     }
 
-    if (mapRef.current) {
-      if (destination) {
-        const minLat = Math.min(origin.latitude, destination.latitude);
-        const maxLat = Math.max(origin.latitude, destination.latitude);
-        const minLng = Math.min(origin.longitude, destination.longitude);
-        const maxLng = Math.max(origin.longitude, destination.longitude);
+    const minLat = Math.min(origin.latitude, destination.latitude);
+    const maxLat = Math.max(origin.latitude, destination.latitude);
+    const minLng = Math.min(origin.longitude, destination.longitude);
+    const maxLng = Math.max(origin.longitude, destination.longitude);
 
-        const latitude = (minLat + maxLat) / 2;
-        const longitude = (minLng + maxLng) / 2;
-        const latitudeDelta = (maxLat - minLat) * 1.5 || origin.latitudeDelta;
-        const longitudeDelta = (maxLng - minLng) * 1.5 || origin.longitudeDelta;
+    const latitude = (minLat + maxLat) / 2;
+    const longitude = (minLng + maxLng) / 2;
+    const latitudeDelta = (maxLat - minLat) * 1.5;
+    const longitudeDelta = (maxLng - minLng) * 1.5;
 
-        const newRegion = {
-          latitude,
-          longitude,
-          latitudeDelta,
-          longitudeDelta,
-        };
+    return {
+      name: 'Route',
+      latitude,
+      longitude,
+      latitudeDelta: Math.max(latitudeDelta, 0.01),
+      longitudeDelta: Math.max(longitudeDelta, 0.01),
+    };
+  };
 
-        mapRef.current.animateToRegion(newRegion, 1000);
-        // Buscar rota do OpenRouteService
-        fetchRoute(origin, destination);
-      } else {
-        // Anima apenas para a origem
-        mapRef.current.animateToRegion(
-          {
-            latitude: origin.latitude,
-            longitude: origin.longitude,
-            latitudeDelta: origin.latitudeDelta,
-            longitudeDelta: origin.longitudeDelta,
-          },
-          1000
-        );
-        setRouteCoordinates([]);
+  const areRegionsEqual = (region1: Region, region2: Region): boolean => {
+    return (
+      region1.latitude === region2.latitude &&
+      region1.longitude === region2.longitude &&
+      region1.latitudeDelta === region2.latitudeDelta &&
+      region1.longitudeDelta === region2.longitudeDelta
+    );
+  };
+
+  const memoizedOrigin = useMemo(() => origin, [origin?.latitude, origin?.longitude, origin?.latitudeDelta, origin?.longitudeDelta]);
+  const memoizedDestination = useMemo(() => destination, [destination?.latitude, destination?.longitude, destination?.latitudeDelta, destination?.longitudeDelta]);
+
+  useEffect(() => {
+    if (memoizedOrigin && memoizedDestination) {
+      fetchRoute(memoizedOrigin, memoizedDestination);
+    } else {
+      setRouteCoordinates([]);
+    }
+  }, [memoizedOrigin, memoizedDestination]);
+
+  useEffect(() => {
+    if (memoizedOrigin) {
+      const newRegion = calculateRegion(memoizedOrigin, memoizedDestination);
+      if (!areRegionsEqual(newRegion, mapRegion)) {
+        setMapRegion(newRegion);
+        mapRef.current?.animateToRegion(newRegion, 1000);
       }
     }
-
-    console.log("dest" + destination?.name);
-  }, [origin, destination]);
+  }, [memoizedOrigin, memoizedDestination, mapRegion]);
 
   return (
     <View style={styles.container}>
@@ -188,25 +195,25 @@ const MapScreen: React.FC<Props> = ({
         followsUserLocation={true}
         customMapStyle={mapStyle}
       >
-        {origin && (
+        {memoizedOrigin && (
           <Marker
             coordinate={{
-              latitude: origin.latitude,
-              longitude: origin.longitude,
+              latitude: memoizedOrigin.latitude,
+              longitude: memoizedOrigin.longitude,
             }}
-            title={origin.name}
+            title={memoizedOrigin.name}
             pinColor="black"
           >
             <Ionicons name="person" size={25} color="black" />
           </Marker>
         )}
-        {destination && (
+        {memoizedDestination && (
           <Marker
             coordinate={{
-              latitude: destination.latitude,
-              longitude: destination.longitude,
+              latitude: memoizedDestination.latitude,
+              longitude: memoizedDestination.longitude,
             }}
-            title={destination.name}
+            title={memoizedDestination.name}
             pinColor="black"
           >
             <Image

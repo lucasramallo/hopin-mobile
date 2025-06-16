@@ -2,7 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { FlatList, Image, ImageBackground, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import MapScreen from '../components/map';
 import { customerStorageService, Status, Trip } from '../service/CustomerStorageService';
 
 export default function Home() {
@@ -68,18 +69,14 @@ export default function Home() {
 
   return (
     <View style={styles.container}>
-      <ImageBackground
-        source={require('../../assets/images/home-background.png')}
-        style={styles.map}
-      >
-        <View style={styles.darkOverlay} />
-        <View style={styles.header}>
-          <Text style={styles.headerText}>HOPIN</Text>
-          <TouchableOpacity>
-            <Ionicons name="location-outline" size={24} color="#fff" />
-          </TouchableOpacity>
-        </View>
-      </ImageBackground>
+      <MapScreen />
+      <View style={styles.darkOverlay} />
+      <View style={styles.header}>
+        <Text style={styles.headerText}>HOPIN</Text>
+        <TouchableOpacity>
+          <Ionicons name="location-outline" size={24} color="#fff" />
+        </TouchableOpacity>
+      </View>
 
       <View style={styles.bottomContainer}>
         <View style={styles.buttonRow}>
