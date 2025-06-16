@@ -226,7 +226,7 @@ export default function TripRequestScreen() {
 
   return (
     <View style={styles.container}>
-      <MapScreen origin={streetOptions.find(street => street.name === origin) || streetOptions[0]} destination={streetOptions.find(street => street.name === destination) || streetOptions[0]} />
+      <MapScreen origin={streetOptions.find(street => street.name === origin) || streetOptions[0]} destination={streetOptions.find(street => street.name === destination)} />
       <View style={styles.header}>
         <Link href="/home"><Ionicons name="arrow-back" size={24} color="black" /></Link>
       </View>

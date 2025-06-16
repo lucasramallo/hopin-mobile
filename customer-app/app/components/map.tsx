@@ -122,6 +122,7 @@ const MapScreen: React.FC<Props> = ({
     }
   };
 
+
   const calculateRegion = (origin: Region, destination?: Region): Region => {
     if (!destination) {
       return {
@@ -207,7 +208,7 @@ const MapScreen: React.FC<Props> = ({
             <Ionicons name="person" size={25} color="black" />
           </Marker>
         )}
-        {memoizedDestination && (
+        {(memoizedDestination && destination) && (
           <Marker
             coordinate={{
               latitude: memoizedDestination.latitude,
