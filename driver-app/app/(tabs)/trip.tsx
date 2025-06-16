@@ -13,6 +13,7 @@ import Mapa from '../../assets/images/Mapa.png';
 import { driverStorageService, Customer, Driver, Status, Trip } from '../service/service';
 import DefaultAvatar from "../../assets/images/avatar_placeholder.png";
 import useStore from '../store/store';
+import Map from '../components/map';
 
 export default function TripScreen() {
   const [tab, setTab] = useState<'atuais' | 'anteriores'>('atuais');
@@ -110,7 +111,7 @@ export default function TripScreen() {
       </View>
 
       {tab === 'atuais' ? (
-        	tripRequests ?
+        	tripRequests.length ?
         	<FlatList
         		data={tripRequests}
         		keyExtractor={(item) => item.id.toString()}
@@ -128,9 +129,9 @@ export default function TripScreen() {
 				          </View>
 				
 				          <Text style={styles.label}>De</Text>
-				          <Text style={styles.location}>{currentTrip.origin}</Text>
+				          <Text style={styles.location}>{currentTrip.origin.name}</Text>
 				          <Text style={styles.label}>Para</Text>
-				          <Text style={styles.location}>{currentTrip.destination}</Text>
+				          <Text style={styles.location}>{currentTrip.destination.name}</Text>
 				
 				          {loading === currentTrip ? (
 				            <Text style={{ textAlign: 'center', marginVertical: 16, fontSize: 16 }}>
@@ -155,7 +156,9 @@ export default function TripScreen() {
 				            </View>
 				          )}
 				
-				          <Image source={Mapa} style={styles.map} resizeMode="cover" />
+				          <View style={styles.map}>
+                    <Map origin={currentTrip.origin} destination={currentTrip.destination} />
+                  </View>
 				        </View>)} /> :
         	<Text style={{ textAlign: 'center', marginTop: 24 }}>Nenhuma solicitação de corrida no momento.</Text>
       ) : (
@@ -185,9 +188,9 @@ export default function TripScreen() {
                   <Text style={styles.label}>Com</Text>
                   <Text style={styles.location}>{trip.customer?.name}</Text>
                   <Text style={styles.label}>De</Text>
-                  <Text style={styles.location}>{trip.origin}</Text>
+                  <Text style={styles.location}>{trip.origin.name}</Text>
                   <Text style={styles.label}>Para</Text>
-                  <Text style={styles.location}>{trip.destination}</Text>
+                  <Text style={styles.location}>{trip.destination.name}</Text>
 
                   {trip.status === Status.COMPLETED && (
                     <>
@@ -220,8 +223,8 @@ export default function TripScreen() {
                 <Text style={styles.modalText}>
                   Obrigado por realizar a corrida com {finishedTrip.customer.name}.
                 </Text>
-                <Text style={styles.modalText}>De: {finishedTrip.origin}</Text>
-                <Text style={styles.modalText}>Para: {finishedTrip.destination}</Text>
+                <Text style={styles.modalText}>De: {finishedTrip.origin.name}</Text>
+                <Text style={styles.modalText}>Para: {finishedTrip.destination.name}</Text>
                 <Text style={styles.modalText}>
                   Valor: R$ {finishedTrip.payment.amount.toString().replace('.', ',')}
                 </Text>
@@ -382,7 +385,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   map: {
-    height: 100,
+    height: 200,
     width: '100%',
     marginTop: 16,
     borderRadius: 10,
