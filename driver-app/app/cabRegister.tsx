@@ -1,18 +1,42 @@
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, Text, View, StyleSheet, TextInput, TouchableOpacity } from "react-native";
-import { Ionicons, FontAwesome, Foundation } from '@expo/vector-icons';
+import { Link } from 'expo-router';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { ScrollView, KeyboardAvoidingView, Platform, Text, View, StyleSheet, TextInput, TouchableOpacity } from "react-native";
+import { Ionicons, FontAwesome, Foundation, Octicons } from '@expo/vector-icons';
+import { driverStorageService, Driver } from './service/service';
+import useStore from './store/store';
 
 export default function Index() {
 	const [model, setModel] = useState("");
 	const [color, setColor] = useState("");
 	const [plateNumber, setPlateNumber] = useState("");
+	const [bank, setBank] = useState("");
+	const [bankBranch, setBankBranch] = useState("");
+	const [bankAccount, setBankAccount] = useState("");
 	const [error, setError] = useState(0);
+  const user = useStore((state) => state.user);
+  const setCurrentUser = useStore((state) => state.setCurrentUser);
+	
+	const register = async () => {
+		const driver = await driverStorageService.getDriver();
+		const loggedDriver = await driverStorageService.saveDriver({
+			...driver,
+			cab: {
+				model,
+				color,
+				plateNumber
+			},
+			bank,
+			bankBranch,
+			bankAccount
+		});
+		setCurrentUser(loggedDriver);
+	}
 	
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
+  	<KeyboardAwareScrollView 
+  		style={{ flex: 1 }} extraScrollHeight={20}>
+  		<View style={styles.container}>
     	<Text style={styles.title}>Informações do carro</Text>
     	
     	<View style={styles.content}>
@@ -43,15 +67,53 @@ export default function Index() {
     			<TextInput 
     				placeholder="Placa" 
     				value={plateNumber}
-    				onChangeText={(value) => setPlateNumber(value)}
+    				onChangeText={(value) => setPlateNumber(value.toUpperCase())}
     				style={styles.input}/>
     		</View>
     	</View>
     	
-    	<TouchableOpacity style={styles.button}>
-    		<Text style={styles.buttonText}>Finalizar</Text>
-      </TouchableOpacity>
-    </KeyboardAvoidingView>
+    	<Text style={styles.title}>Informações bancárias</Text>
+    	
+    	<View style={styles.content} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+    		<View style={[styles.inputView, error === 4 ? styles.inputViewError : {}]}>
+    			<View style={[styles.iconView, error === 4 ? styles.iconViewError : {}]}>
+    				<FontAwesome name="bank" size={20} color="black" />
+    			</View>
+    			<TextInput 
+    				placeholder="Banco" 
+    				value={bank}
+    				onChangeText={(value) => setBank(value)}
+    				style={styles.input}/>
+    		</View>
+    		<View style={[styles.inputView, error === 5 ? styles.inputViewError : {}]}>
+    			<View style={[styles.iconView, error === 5 ? styles.iconViewError : {}]}>
+    				<Ionicons name="git-branch" size={20} color="black" />
+    			</View>
+    			<TextInput 
+    				placeholder="Agência" 
+    				value={bankBranch}
+    				onChangeText={(value) => setBankBranch(value)}
+    				style={styles.input}/>
+    		</View>
+    		<View style={[styles.inputView, error === 6 ? styles.inputViewError : {}]}>
+    			<View style={[styles.iconView, error === 6 ? styles.iconViewError : {}]}>
+    				<Octicons name="number" size={20} color="black" />
+    			</View>
+    			<TextInput 
+    				placeholder="Conta" 
+    				value={bankAccount}
+    				onChangeText={(value) => setBankAccount(value)}
+    				style={styles.input}/>
+    		</View>
+    	</View>
+    	
+	    <Link href="trip" asChild>
+	    	<TouchableOpacity style={styles.button} onPress={register}>
+	    		<Text style={styles.buttonText}>Finalizar</Text>
+	      </TouchableOpacity>
+      </Link>
+      </View>
+    </KeyboardAwareScrollView>
   );
 }
 
@@ -60,8 +122,8 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: 'white',
-    padding: 15,
+    paddingHorizontal: 15,
+    paddingVertical: 100,
     gap: 50
   },
   title: {
