@@ -27,16 +27,6 @@ export default function Login() {
 		setError(0);
 	}, [email, password]);
 
-	useEffect(() => {
-		const checkUser = async () => {
-			const user = await driverStorageService.getDriver();
-			if (user) {
-				router.push('/trip');
-			}
-		};
-		checkUser();
-	}, []);
-
 	return (
 		<KeyboardAvoidingView
 			style={styles.container}
