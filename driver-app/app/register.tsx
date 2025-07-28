@@ -8,7 +8,7 @@ import useStore from './store/store';
 export default function Index() {
 	const [name, setName] = useState("");
 	const [email, setEmail] = useState("");
-	const [birthDate, setBirthDate] = useState("");
+	const [dateOfBirth, setDateOfBirth] = useState("");
 	const [password, setPassword] = useState("");
 	const [errors, setErrors] = useState<number[]>([]);
 	const router = useRouter();
@@ -24,7 +24,7 @@ export default function Index() {
 	
 	useEffect(() => {
 		setErrors(errors.filter(input => input != 3));
-	}, [birthDate]);
+	}, [dateOfBirth]);
 	
 	useEffect(() => {
 		setErrors(errors.filter(input => input != 4));
@@ -42,7 +42,7 @@ export default function Index() {
     return value.slice(0, 2) + "/" + value.slice(2, 4) + "/" + value.slice(4, 8);
   }
   
-  const calculateAge = (birthDate) => {
+  const calculateAge = (birthDate: string) => {
     const [day, month, year] = birthDate.split('/').map(Number);
     const birthDateObj = new Date(year, month - 1, day);
     const ageDiff = Date.now() - birthDateObj.getTime();
@@ -56,7 +56,7 @@ export default function Index() {
 		    name,
 		    email,
 		    password,
-		    birthDate,
+		    dateOfBirth,
 		    trips: []
 		  };
 		  
@@ -72,7 +72,7 @@ export default function Index() {
   	const validName = name.length > 3;
   	const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   	const validEmail = emailRegex.test(email);
-  	const [day, month, year] = birthDate.split('/');
+  	const [day, month, year] = dateOfBirth.split('/');
   	const validBirthDate = day && month && year && parseInt(year) <= (new Date().getFullYear() - 18);
   	const validPassword = password.length >= 8;
   	
@@ -130,8 +130,8 @@ export default function Index() {
     			</View>
     			<TextInput 
     				placeholder="Data de nascimento" 
-    				value={birthDate}
-    				onChangeText={(value) => setBirthDate(dateMask(value))}
+    				value={dateOfBirth}
+    				onChangeText={(value) => setDateOfBirth(dateMask(value))}
     				keyboardType="numeric"
     				style={styles.input}/>
     		</View>
