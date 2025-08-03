@@ -19,17 +19,14 @@ import useStore from './store/index';
 interface Customer {
   id: string;
 }
-
 interface Driver {
   id: string;
   name: string;
 }
-
 interface Payment {
   amount: number;
   currency: string;
 }
-
 export interface TripResponseDTO {
   id: string;
   customer: Customer;
@@ -55,15 +52,13 @@ const TRIP_RESPONSE_DTO: TripResponseDTO = {
 export default function TripRequestScreen() {
   const router = useRouter();
   const fadeAnim = useRef(new Animated.Value(1)).current;
-
   const [requested, setRequested] = useState(false);
   const [origin, setOrigin] = useState('');
   const [destination, setDestination] = useState('');
   const [time, setTime] = useState(0);
   const [price, setPrice] = useState(0);
   const [distance, setDistance] = useState(0);
-  const [driverName, setDriverName] = useState(getRandomDriverName());
-
+  const [driver, setDriver] = useState<Driver | null>(null); // Estado para o motorista selecionado
   const setCurrentTrip = useStore((state) => state.setCurrentTrip);
 
   const streetOptions: Region[] = [
@@ -179,24 +174,37 @@ export default function TripRequestScreen() {
     }
   }, [requested]);
 
-  const handleGenerateTrip = () => {
+  // Função para selecionar um motorista aleatoriamente
+  const selectRandomDriver = async () => {
+    try {
+      const response = await api.get<Driver[]>('/driver/drivers');
+      const drivers = response.data;
+      if (drivers.length === 0) {
+        alert('Nenhum motorista disponível.');
+        return null;
+      }
+      const randomIndex = drivers.length > 1 ? Math.floor(Math.random() * drivers.length) : 0;
+      return drivers[randomIndex];
+    } catch (error) {
+      console.error('Erro ao buscar motoristas:', error);
+      alert('Erro ao buscar motoristas. Tente novamente.');
+      return null;
+    }
+  };
+
+  const handleGenerateTrip = async () => {
     const simulatedTime = Math.floor(Math.random() * 10) + 1;
     const simulatedPrice = Math.floor(Math.random() * 50) + 10;
     const simulatedDistance = Math.floor(Math.random() * 20) + 1;
-
     setTime(simulatedTime);
     setPrice(simulatedPrice);
     setDistance(simulatedDistance);
-    setRequested(true);
+    const selectedDriver = await selectRandomDriver();
+    if (selectedDriver) {
+      setDriver(selectedDriver);
+      setRequested(true);
+    }
   };
-
-  function getRandomDriverName(): string {
-    const firstNames = ['Carlos', 'Ana', 'João', 'Mariana', 'Pedro', 'Luana'];
-    const lastNames = ['Silva', 'Santos', 'Oliveira', 'Souza', 'Lima'];
-    const randomFirst = firstNames[Math.floor(Math.random() * firstNames.length)];
-    const randomLast = lastNames[Math.floor(Math.random() * lastNames.length)];
-    return `${randomFirst} ${randomLast}`;
-  }
 
   const handleTripRequest = async () => {
     try {
@@ -204,26 +212,24 @@ export default function TripRequestScreen() {
         alert('Por favor, selecione origem e destino.');
         return;
       }
-
       const customer = await customerStorageService.getCustomer();
       if (!customer) {
         alert('Nenhum cliente logado. Faça login antes de solicitar uma viagem.');
         return;
       }
-
-      const driverId = '1d4cdfbd-6373-476d-b178-41bbb7cc5070'
-
+      if (!driver) {
+        alert('Nenhum motorista selecionado. Tente novamente.');
+        return;
+      }
       const tripData = {
-        driverId: driverId,
+        driverId: driver.id,
         paymentMethod: 'CREDIT_CARD',
         paymentAmount: price,
         origin: origin,
         destination: destination
       };
-
       const response = await api.post<TripResponseDTO>('/trip', tripData);
       const tripResponse: TripResponseDTO = response.data;
-
       await setCurrentTrip({
         id: tripResponse.id,
         customerId: tripResponse.customer.id,
@@ -234,7 +240,6 @@ export default function TripRequestScreen() {
         destination: tripResponse.destination,
         createdAt: tripResponse.createdAt,
       });
-
       router.replace({
         pathname: '/loadingTripScreen',
         params: { tripId: tripResponse.id },
@@ -250,7 +255,7 @@ export default function TripRequestScreen() {
       <View style={styles.driverCard}>
         <Image source={require('../assets/images/carIcon.png')} style={styles.carImage} resizeMode="contain" />
         <View style={styles.driverInfo}>
-          <Text style={styles.driverName}>{driverName}</Text>
+          <Text style={styles.driverName}>{driver?.name || 'Motorista'}</Text>
           <Text style={styles.pricePerKm}>Preço: R$5/Km</Text>
           <View style={styles.rating}>
             {[...Array(5)].map((_, index) => (
@@ -259,13 +264,11 @@ export default function TripRequestScreen() {
           </View>
         </View>
       </View>
-
       <View style={styles.tripDetails}>
         <View style={styles.detailItem}><Text style={styles.detailValue}>{`${time} min`}</Text></View>
         <View style={styles.detailItem}><Text style={styles.detailValue}>{`R$${price}`}</Text></View>
         <View style={styles.detailItem}><Text style={styles.detailValue}>{`${distance} km`}</Text></View>
       </View>
-
       <Button onPress={handleTripRequest} title="Solicitar" />
     </View>
   );
@@ -285,7 +288,6 @@ export default function TripRequestScreen() {
             ))}
           </Picker>
         </View>
-
         <Text style={{ fontWeight: 'bold', marginTop: 15, marginBottom: 10 }}>Destino</Text>
         <View style={styles.pickerContainer}>
           <Picker selectedValue={destination} onValueChange={(itemValue) => setDestination(itemValue)}>
@@ -295,10 +297,8 @@ export default function TripRequestScreen() {
             ))}
           </Picker>
         </View>
-
         <Button title="Confirmar" onPress={handleGenerateTrip} style={{ marginTop: 15 }} />
       </View>
-
       {requested && requestedTrip()}
     </View>
   );

@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Link, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import api from './api'; // Importe a instância da API
@@ -36,11 +36,6 @@ export default function SuccessScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Link href="/home">
-          <Ionicons name="close" size={28} color="#000" />
-        </Link>
-      </View>
       <View style={styles.content}>
         <Ionicons name="checkmark-circle" size={80} color="#28a745" style={styles.checkIcon} />
         <Text style={styles.title}>Obrigado!</Text>
