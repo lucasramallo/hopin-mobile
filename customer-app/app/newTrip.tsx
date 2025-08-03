@@ -16,22 +16,18 @@ import MapScreen, { Region } from './components/map';
 import { customerStorageService, Status } from './service/CustomerStorageService';
 import useStore from './store/index';
 
-// Interface for TripResponseDTO
 interface Customer {
   id: string;
-  // Add other customer properties as needed
 }
 
 interface Driver {
   id: string;
   name: string;
-  // Add other driver properties as needed
 }
 
 interface Payment {
   amount: number;
   currency: string;
-  // Add other payment properties as needed
 }
 
 export interface TripResponseDTO {

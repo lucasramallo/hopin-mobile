@@ -89,8 +89,10 @@ export default function Home() {
               apiTrips.map(async (tripDTO) => {
                 let rating: number | undefined;
                 try {
-                  const ratingResponse = await api.get<Rating>(`/rating/${tripDTO.id}`);
-                  rating = ratingResponse.data.rating;
+                  if (tripDTO.status !== Status.CANCELLED) {
+                    const ratingResponse = await api.get<Rating>(`/rating/${tripDTO.id}`);
+                    rating = ratingResponse.data.rating || undefined;
+                  }
                 } catch (error) {
                   console.error(`Failed to fetch rating for trip ${tripDTO.id}:`, error);
                 }
@@ -149,7 +151,7 @@ export default function Home() {
   }
 
   const renderItem = ({ item }: { item: Trip }) => {
-    const isCanceled = item.status === Status.CANCELED;
+    const isCanceled = item.status === Status.CANCELLED;
     return (
       <View style={[styles.card, isCanceled && { opacity: 0.5 }]}>
         <Image source={require('../../assets/images/carIcon.png')} style={{ width: 50, height: 50, marginRight: 10 }} resizeMode="contain" />

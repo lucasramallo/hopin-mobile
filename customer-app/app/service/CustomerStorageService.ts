@@ -10,7 +10,7 @@ enum Status {
   PENDING = 'PENDING',
   IN_PROGRESS = 'IN_PROGRESS',
   COMPLETED = 'COMPLETED',
-  CANCELED = 'CANCELED',
+  CANCELLED = 'CANCELLED',
 }
 
 interface Price {

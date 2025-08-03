@@ -2,12 +2,37 @@ import { Ionicons } from '@expo/vector-icons';
 import { Link, useRouter } from 'expo-router';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import api from './api'; // Importe a instância da API
 import Button from './components/button';
+import type { TripResponseDTO } from './newTrip';
 import useStore from './store/index';
 
 export default function SuccessScreen() {
   const router = useRouter();
   const currentTrip = useStore((state) => state.trip);
+  const setCurrentTrip = useStore((state) => state.setCurrentTrip);
+
+  const handleCompleteTrip = async () => {
+    try {
+      if (!currentTrip?.id) {
+        alert('Nenhuma viagem encontrada para concluir.');
+        return;
+      }
+
+      const response = await api.patch<TripResponseDTO>(`/trip/${currentTrip.id}/complete`);
+      const tripResponse: TripResponseDTO = response.data;
+
+      await setCurrentTrip({
+        ...tripResponse,
+        customerId: tripResponse.customer.id,
+        payment: { amount: tripResponse.payment.amount, currency: 'BRL' },
+      });
+      router.replace('/reviewScreen');
+    } catch (error) {
+      console.error('Erro ao concluir viagem:', error);
+      alert('Erro ao concluir a viagem. Tente novamente.');
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -16,12 +41,10 @@ export default function SuccessScreen() {
           <Ionicons name="close" size={28} color="#000" />
         </Link>
       </View>
-
       <View style={styles.content}>
         <Ionicons name="checkmark-circle" size={80} color="#28a745" style={styles.checkIcon} />
         <Text style={styles.title}>Obrigado!</Text>
         <Text style={styles.subtitle}>Esperamos que tenha gostado da Viagem!</Text>
-
         <View style={styles.summaryCard}>
           <View style={styles.summaryHeader}>
             <Text style={styles.summaryTitle}>Resumo</Text>
@@ -44,8 +67,7 @@ export default function SuccessScreen() {
             <Text style={styles.summaryValue}>{`R$ ${currentTrip?.payment.amount}`}</Text>
           </View>
         </View>
-
-        <Button onPress={() => router.replace('/reviewScreen')} title='Concluir' />
+        <Button onPress={handleCompleteTrip} title="Concluir" />
       </View>
     </View>
   );
@@ -105,18 +127,6 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   summaryValue: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  concludeButton: {
-    backgroundColor: '#000',
-    paddingVertical: 15,
-    borderRadius: 10,
-    width: '100%',
-    alignItems: 'center',
-  },
-  concludeButtonText: {
-    color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
   },

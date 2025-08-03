@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
+import api from './api'; // Importe a instância da API
 import Button from './components/button';
 import { customerStorageService, Status, Trip } from './service/CustomerStorageService';
 import useStore from './store/index';
@@ -11,8 +12,8 @@ export default function LoadingScreen() {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isCancelled = useRef(false);
   const hasNavigated = useRef(false);
-
   const currentTrip = useStore((state) => state.trip);
+  const setCurrentTrip = useStore((state) => state.setCurrentTrip);
 
   useEffect(() => {
     const startLoading = () => {
@@ -21,46 +22,48 @@ export default function LoadingScreen() {
         duration: 5000,
         useNativeDriver: false,
       }).start();
-
       timerRef.current = setTimeout(() => {
         if (!isCancelled.current && !hasNavigated.current) {
           if (currentTrip) {
             customerStorageService.addTrip(currentTrip);
           }
-
           hasNavigated.current = true;
           router.push('/success');
         }
       }, 6000);
     };
-
     startLoading();
-
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
       isCancelled.current = true;
     };
   }, []);
 
-  const handleCancelTrip = () => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
+  const handleCancelTrip = async () => {
+    try {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+      isCancelled.current = true;
 
-    isCancelled.current = true;
+      if (currentTrip) {
+        const response = await api.patch(`/trip/${currentTrip.id}/cancel`);
+        const updatedTrip: Trip = {
+          ...currentTrip,
+          status: Status.CANCELLED,
+        };
+        await customerStorageService.addTrip(updatedTrip);
+        await setCurrentTrip(updatedTrip);
+      }
 
-    if (currentTrip) {
-      const newTrip: Trip = {
-        ...currentTrip,
-        status: Status.CANCELED,
-      };
-      customerStorageService.addTrip(newTrip);
-    }
-
-    if (!hasNavigated.current) {
-      hasNavigated.current = true;
-      router.push('/home');
+      if (!hasNavigated.current) {
+        hasNavigated.current = true;
+        router.push('/home');
+      }
+    } catch (error) {
+      console.error('Erro ao cancelar viagem:', error);
+      alert('Erro ao cancelar a viagem. Tente novamente.');
     }
   };
 

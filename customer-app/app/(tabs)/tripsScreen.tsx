@@ -76,9 +76,11 @@ export default function TripsScreen() {
               apiTrips.map(async (tripDTO) => {
                 let rating: number | undefined;
                 try {
-                  const ratingResponse = await api.get<Rating>(`/rating/${tripDTO.id}`);
-                  rating = ratingResponse.data.rating;
-                  console.log(`Rating obtido para a viagem ${tripDTO.id}: ${rating}`);
+                  if (tripDTO.status !== Status.CANCELLED) {
+                    const ratingResponse = await api.get<Rating>(`/rating/${tripDTO.id}`);
+                    rating = ratingResponse.data.rating || undefined;
+                    console.log(`Rating obtido para a viagem ${tripDTO.id}: ${rating}`);
+                  }
                 } catch (error: any) {
                   if (error.response?.status === 404) {
                     console.log(`Nenhum rating encontrado para a viagem ${tripDTO.id}`);
@@ -145,7 +147,7 @@ export default function TripsScreen() {
   };
 
   const renderItem = ({ item }: { item: Trip }) => {
-    const isCanceled = item.status === Status.CANCELED;
+    const isCanceled = item.status === Status.CANCELLED;
     return (
       <View style={[styles.card, isCanceled && { opacity: 0.5 }]}>
         <Image
