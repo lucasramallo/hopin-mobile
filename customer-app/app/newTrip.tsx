@@ -10,11 +10,51 @@ import {
   View
 } from 'react-native';
 import 'react-native-get-random-values';
-import { v4 as uuidv4 } from 'uuid';
+import api from './api';
 import Button from './components/button';
 import MapScreen, { Region } from './components/map';
 import { customerStorageService, Status } from './service/CustomerStorageService';
 import useStore from './store/index';
+
+// Interface for TripResponseDTO
+interface Customer {
+  id: string;
+  // Add other customer properties as needed
+}
+
+interface Driver {
+  id: string;
+  name: string;
+  // Add other driver properties as needed
+}
+
+interface Payment {
+  amount: number;
+  currency: string;
+  // Add other payment properties as needed
+}
+
+export interface TripResponseDTO {
+  id: string;
+  customer: Customer;
+  driver: Driver;
+  payment: Payment;
+  status: Status;
+  origin: string;
+  destination: string;
+  createdAt: string;
+}
+
+const TRIP_RESPONSE_DTO: TripResponseDTO = {
+  id: '',
+  customer: { id: '' },
+  driver: { id: '', name: '' },
+  payment: { amount: 0, currency: '' },
+  status: Status.PENDING,
+  origin: '',
+  destination: '',
+  createdAt: ''
+};
 
 export default function TripRequestScreen() {
   const router = useRouter();
@@ -101,7 +141,6 @@ export default function TripRequestScreen() {
       "latitudeDelta": 0.0922,
       "longitudeDelta": 0.0421
     },
-    // New locations below
     {
       "name": "Rua José Domingos da Silva, 200 - Malvinas, Campina Grande",
       "latitude": -7.2600,
@@ -176,22 +215,33 @@ export default function TripRequestScreen() {
         return;
       }
 
-      const tripId = uuidv4();
+      const driverId = '1d4cdfbd-6373-476d-b178-41bbb7cc5070'
+
+      const tripData = {
+        driverId: driverId,
+        paymentMethod: 'CREDIT_CARD',
+        paymentAmount: price,
+        origin: origin,
+        destination: destination
+      };
+
+      const response = await api.post<TripResponseDTO>('/trip', tripData);
+      const tripResponse: TripResponseDTO = response.data;
 
       await setCurrentTrip({
-        id: tripId,
-        customerId: customer.id,
-        driver: { id: uuidv4(), name: driverName },
-        status: Status.COMPLETED,
-        origin,
+        id: tripResponse.id,
+        customerId: tripResponse.customer.id,
+        driver: tripResponse.driver,
+        status: tripResponse.status,
+        origin: tripResponse.origin,
         payment: { amount: price, currency: 'BRL' },
-        destination,
-        createdAt: new Date().toISOString(),
+        destination: tripResponse.destination,
+        createdAt: tripResponse.createdAt,
       });
 
       router.replace({
         pathname: '/loadingTripScreen',
-        params: { tripId },
+        params: { tripId: tripResponse.id },
       });
     } catch (error) {
       console.error('Erro ao solicitar viagem:', error);

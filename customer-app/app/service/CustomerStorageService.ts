@@ -48,9 +48,42 @@ interface Customer {
   trips?: Trip[];
 }
 
+interface PendingRating {
+  tripId: string;
+  rating: number;
+  feedback: string;
+  needsSync: boolean;
+}
+
+interface PendingCustomerUpdate {
+  name: string;
+  email: string;
+  password: string;
+  creditCardNumber?: string;
+  creditCardExpiry?: string;
+  creditCardCVV?: string;
+  needsSync: boolean;
+}
+
 const CUSTOMER_KEY = '@CurrentCustomer';
+const PENDING_RATINGS_KEY = '@PendingRatings';
+const PENDING_CUSTOMER_UPDATE_KEY = '@PendingCustomerUpdate';
 
 class CustomerStorageService {
+  async saveTrips(fetchedTrips: Trip[]): Promise<void> {
+    try {
+      const customer = await this.getCustomer();
+      if (!customer) {
+        throw new Error('No customer logged in');
+      }
+      customer.trips = fetchedTrips;
+      await this.saveCustomer(customer);
+    } catch (error) {
+      console.error('Error saving trips to customer:', error);
+      throw new Error('Failed to save trips');
+    }
+  }
+
   async saveCustomer(customer: Customer): Promise<void> {
     try {
       const customerJson = JSON.stringify(customer);
@@ -77,6 +110,7 @@ class CustomerStorageService {
   async clearCustomer(): Promise<void> {
     try {
       await AsyncStorage.removeItem(CUSTOMER_KEY);
+      await AsyncStorage.removeItem(PENDING_CUSTOMER_UPDATE_KEY);
     } catch (error) {
       console.error('Error clearing customer from AsyncStorage:', error);
       throw new Error('Failed to clear customer');
@@ -89,14 +123,11 @@ class CustomerStorageService {
       if (!customer) {
         throw new Error('No customer logged in');
       }
-
       const newTrip: Trip = {
         ...trip,
         driver: { id: uuidv4(), name: 'Jane Driver' },
-
         createdAt: new Date().toISOString(),
       };
-
       customer.trips = customer.trips ? [...customer.trips, newTrip] : [newTrip];
       await this.saveCustomer(customer);
     } catch (error) {
@@ -111,17 +142,12 @@ class CustomerStorageService {
       if (!customer || !customer.trips) {
         throw new Error('No customer or trips found');
       }
-
       const updatedTrips = customer.trips.map(trip => {
         if (trip.id === updatedTrip.id) {
-          return {
-            ...trip,
-            ...updatedTrip,
-          };
+          return { ...trip, ...updatedTrip };
         }
         return trip;
       });
-
       customer.trips = updatedTrips;
       await this.saveCustomer(customer);
     } catch (error) {
@@ -129,7 +155,6 @@ class CustomerStorageService {
       throw new Error('Failed to update trip');
     }
   }
-
 
   async getTrips(): Promise<Trip[]> {
     try {
@@ -143,7 +168,71 @@ class CustomerStorageService {
       return [];
     }
   }
+
+  async addPendingRating(rating: PendingRating): Promise<void> {
+    try {
+      const pendingRatings = await this.getPendingRatings();
+      pendingRatings.push(rating);
+      await AsyncStorage.setItem(PENDING_RATINGS_KEY, JSON.stringify(pendingRatings));
+    } catch (error) {
+      console.error('Error adding pending rating:', error);
+      throw new Error('Failed to add pending rating');
+    }
+  }
+
+  async getPendingRatings(): Promise<PendingRating[]> {
+    try {
+      const ratingsJson = await AsyncStorage.getItem(PENDING_RATINGS_KEY);
+      if (ratingsJson) {
+        return JSON.parse(ratingsJson) as PendingRating[];
+      }
+      return [];
+    } catch (error) {
+      console.error('Error retrieving pending ratings:', error);
+      return [];
+    }
+  }
+
+  async clearPendingRatings(): Promise<void> {
+    try {
+      await AsyncStorage.removeItem(PENDING_RATINGS_KEY);
+    } catch (error) {
+      console.error('Error clearing pending ratings:', error);
+      throw new Error('Failed to clear pending ratings');
+    }
+  }
+
+  async addPendingCustomerUpdate(update: PendingCustomerUpdate): Promise<void> {
+    try {
+      await AsyncStorage.setItem(PENDING_CUSTOMER_UPDATE_KEY, JSON.stringify(update));
+    } catch (error) {
+      console.error('Error adding pending customer update:', error);
+      throw new Error('Failed to add pending customer update');
+    }
+  }
+
+  async getPendingCustomerUpdate(): Promise<PendingCustomerUpdate | null> {
+    try {
+      const updateJson = await AsyncStorage.getItem(PENDING_CUSTOMER_UPDATE_KEY);
+      if (updateJson) {
+        return JSON.parse(updateJson) as PendingCustomerUpdate;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error retrieving pending customer update:', error);
+      return null;
+    }
+  }
+
+  async clearPendingCustomerUpdate(): Promise<void> {
+    try {
+      await AsyncStorage.removeItem(PENDING_CUSTOMER_UPDATE_KEY);
+    } catch (error) {
+      console.error('Error clearing pending customer update:', error);
+      throw new Error('Failed to clear pending customer update');
+    }
+  }
 }
 
 export const customerStorageService = new CustomerStorageService();
-export { Customer, Driver, Price, Role, Status, Trip };
+export { Customer, Driver, PendingCustomerUpdate, PendingRating, Price, Role, Status, Trip };

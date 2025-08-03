@@ -1,8 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
+import NetInfo from '@react-native-community/netinfo';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import StarRating from 'react-native-star-rating-widget';
+import api from './api';
 import Button from './components/button';
 import { customerStorageService } from './service/CustomerStorageService';
 import useStore from './store/index';
@@ -10,17 +12,49 @@ import useStore from './store/index';
 export default function ReviewScreen() {
   const router = useRouter();
   const [rating, setRating] = useState(0);
-
   const currentTrip = useStore((state) => state.trip);
   const resetCurrentTrip = useStore((state) => state.resetCurrentTrip);
 
-  const handleSubmit = () => {
-    if (currentTrip) {
-      const updatedTrip = {
-        ...currentTrip,
+  const handleSubmit = async () => {
+    if (!currentTrip) return;
+
+    const netInfo = await NetInfo.fetch();
+    const isConnected = netInfo.isConnected;
+
+    const updatedTrip = {
+      ...currentTrip,
+      rating: rating,
+    };
+
+    try {
+      if (isConnected) {
+        const ratingRequest = {
+          tripId: currentTrip.id,
+          rating: rating,
+          feedback: '',
+        };
+        await api.post('/rating', ratingRequest);
+        await customerStorageService.updateTrip(updatedTrip);
+      } else {
+        await customerStorageService.addPendingRating({
+          tripId: currentTrip.id,
+          rating: rating,
+          feedback: '',
+          needsSync: true,
+        });
+        await customerStorageService.updateTrip(updatedTrip);
+      }
+      resetCurrentTrip();
+      router.replace('/home');
+    } catch (error) {
+      console.error('Error submitting rating:', error);
+      await customerStorageService.addPendingRating({
+        tripId: currentTrip.id,
         rating: rating,
-      };
-      customerStorageService.updateTrip(updatedTrip);
+        feedback: '',
+        needsSync: true,
+      });
+      await customerStorageService.updateTrip(updatedTrip);
       resetCurrentTrip();
       router.replace('/home');
     }
@@ -33,7 +67,6 @@ export default function ReviewScreen() {
           <Ionicons name="close" size={28} color="#000" />
         </TouchableOpacity>
       </View>
-
       <View style={styles.content}>
         <View style={styles.emojiContainer}>
           <TouchableOpacity>
@@ -49,19 +82,11 @@ export default function ReviewScreen() {
             <Ionicons name="happy" size={40} color="#FFD700" style={styles.emoji} />
           </TouchableOpacity>
         </View>
-
         <Text style={styles.title}>Avalie a corrida</Text>
         <Text style={styles.subtitle}>Esperamos que tenha sido satisfatória</Text>
-
         <View style={styles.starInputContainer}>
-          <StarRating
-            rating={rating}
-            onChange={setRating}
-            starSize={50}
-            color="#121212"
-          />
+          <StarRating rating={rating} onChange={setRating} starSize={50} color="#121212" />
         </View>
-
         <Button onPress={handleSubmit} title="Avaliar" />
       </View>
     </View>
@@ -111,20 +136,5 @@ const styles = StyleSheet.create({
   },
   starInputContainer: {
     marginBottom: 30,
-  },
-  star: {
-    marginHorizontal: 5,
-  },
-  submitButton: {
-    backgroundColor: '#000',
-    paddingVertical: 15,
-    borderRadius: 10,
-    width: '100%',
-    alignItems: 'center',
-  },
-  submitButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
   },
 });
