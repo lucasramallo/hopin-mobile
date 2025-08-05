@@ -3,10 +3,18 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { v4 as uuidv4 } from 'uuid';
+import api, { setAuthToken } from './api';
 import Button from './components/button';
-import { Customer, Role } from './service/CustomerStorageService';
+import { customerStorageService, Role, type Customer } from './service/CustomerStorageService';
 import useStore from './store/index';
+
+// Corrected interface for registerResponse
+interface UserResponse {
+  id: string;
+  name: string;
+  email: string;
+  createdAt: string;
+}
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -15,6 +23,9 @@ export default function LoginScreen() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [creditCardNumber, setCreditCardNumber] = useState('');
+  const [creditCardCVV, setCreditCardCVV] = useState('');
+  const [creditCardExpiry, setCreditCardExpiry] = useState('');
 
   const handleCreateAccount = async () => {
     if (!name || !email || !password) {
@@ -22,21 +33,48 @@ export default function LoginScreen() {
       return;
     }
 
-    const newCustomer: Customer = {
-      id: uuidv4(),
+    const payload = {
       name,
       email,
       password,
-      createdAt: new Date().toISOString(),
-      role: Role.USER,
-      creditCardNumber: '',
-      creditCardExpiry: '',
-      creditCardCVV: '',
-      trips: [],
+      creditCardNumber,
+      creditCardCVV,
+      creditCardExpiry,
     };
 
-    setCurrentCustomer(newCustomer);
-    router.replace('/paymantMethodScreen');
+    try {
+      const registerResponse = await api.post<UserResponse>('/auth/customer/register', payload);
+      const customer = registerResponse.data;
+
+      const loginPayload = {
+        email,
+        password,
+      };
+      const loginResponse = await api.post('/auth/login', loginPayload);
+      const { token } = loginResponse.data;
+
+      const newCustomer: Customer = {
+        id: customer.id,
+        name: customer.name,
+        email: customer.email,
+        password,
+        createdAt: customer.createdAt,
+        role: Role.USER,
+        creditCardNumber: creditCardNumber || '',
+        creditCardExpiry: creditCardExpiry || '',
+        creditCardCVV: creditCardCVV || '',
+        trips: [],
+      };
+
+      await setAuthToken(token);
+      await setCurrentCustomer(newCustomer);
+      await customerStorageService.saveCustomer(newCustomer);
+
+      router.replace('/home');
+    } catch (error) {
+      console.error('Erro na requisição:', error);
+      alert('Erro ao criar conta ou logar. Verifique seus dados ou tente novamente.');
+    }
   };
 
   return (
@@ -74,6 +112,40 @@ export default function LoginScreen() {
           style={styles.input}
           value={password}
           onChangeText={setPassword}
+        />
+      </View>
+
+      <View style={styles.inputContainer}>
+        <FontAwesome name="credit-card" size={18} color="black" style={styles.icon} />
+        <TextInput
+          placeholder="Número do Cartão"
+          placeholderTextColor="#999"
+          style={styles.input}
+          value={creditCardNumber}
+          onChangeText={setCreditCardNumber}
+        />
+      </View>
+
+      <View style={styles.inputContainer}>
+        <FontAwesome name="calendar" size={18} color="black" style={styles.icon} />
+        <TextInput
+          placeholder="Data de Expiração (MM/AA)"
+          placeholderTextColor="#999"
+          style={styles.input}
+          value={creditCardExpiry}
+          onChangeText={setCreditCardExpiry}
+        />
+      </View>
+
+      <View style={styles.inputContainer}>
+        <FontAwesome name="lock" size={18} color="black" style={styles.icon} />
+        <TextInput
+          placeholder="CVV"
+          placeholderTextColor="#999"
+          secureTextEntry
+          style={styles.input}
+          value={creditCardCVV}
+          onChangeText={setCreditCardCVV}
         />
       </View>
 

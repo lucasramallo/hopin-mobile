@@ -1,11 +1,61 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
-import React from 'react';
-import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import React, { useState } from 'react';
+import {
+  Alert,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
+} from 'react-native';
+import api, { setAuthToken } from './api';
 import Button from './components/button';
+import useStore from './store/index';
 
 export default function LoginScreen() {
   const router = useRouter();
+  const setCurrentCustomer = useStore((state) => state.setCurrentCustomer);
+
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert('Erro', 'Preencha todos os campos');
+      return;
+    }
+
+    const payload = {
+      email,
+      password,
+    };
+
+    try {
+      const response = await api.post('/auth/login', payload);
+      const { token } = response.data;
+
+      await setAuthToken(token);
+
+      router.replace('/home');
+    } catch (error) {
+      console.error('Erro na requisição:', error);
+
+      console.error('Erro na configuração:', error);
+      Alert.alert('Erro', 'Ocorreu um erro inesperado.');
+    }
+  };
+
+  const handleClearStorage = async () => {
+    const router = useRouter();
+    try {
+      await AsyncStorage.clear();
+      router.push('/loginScreen');
+    } catch (e) {
+      console.error('Erro ao limpar AsyncStorage:', e);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -17,6 +67,9 @@ export default function LoginScreen() {
           placeholder="Email"
           placeholderTextColor="#999"
           style={styles.input}
+          value={email}
+          onChangeText={setEmail}
+          autoCapitalize="none"
         />
       </View>
 
@@ -27,18 +80,21 @@ export default function LoginScreen() {
           placeholderTextColor="#999"
           secureTextEntry
           style={styles.input}
+          value={password}
+          onChangeText={setPassword}
         />
       </View>
 
-      <Button title='Continuar' onPress={() => router.replace('/home')} />
+      <Button title="Continuar" onPress={handleLogin} />
 
       <TouchableOpacity onPress={() => router.replace('/registerScreen')}>
         <Text style={styles.linkText}>Fazer Cadastro</Text>
       </TouchableOpacity>
+
+      <Button title="Resetar Memória" onPress={handleClearStorage} />
     </View>
   );
 }
-
 
 const styles = StyleSheet.create({
   container: {
