@@ -59,9 +59,8 @@ export default function Index() {
 		    dateOfBirth,
 		    trips: []
 		  };
-		  
-		  const loggedUser = await driverStorageService.saveDriver(newDriver);
-		  setCurrentUser(loggedUser);
+			
+		  setCurrentUser(newDriver);
 		  router.push('/cabRegister');
   	} catch (error) {
       console.error("Erro ao registrar:", error);
@@ -151,7 +150,7 @@ export default function Index() {
 	    	<TouchableOpacity style={styles.button} onPress={handleSubmit}>
 	    		<Text style={styles.buttonText}>Continuar</Text>
 	      </TouchableOpacity>
-	      <Link href="login" asChild>
+	      <Link href="/login" asChild>
 		      <TouchableOpacity>
 		      	<Text>Fazer login</Text>
 		      </TouchableOpacity>

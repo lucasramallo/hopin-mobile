@@ -70,7 +70,6 @@ export default function Index() {
     if(driver){
       driverStorageService.editDriver(driver);
       setCurrentUser(driver);
-      console.log(driver);
       router.push("/profile");
     }
   };
@@ -120,7 +119,7 @@ export default function Index() {
   return (
     <ScrollView style={{ flex: 1 }} ref={scrollRef}>
       <KeyboardAvoidingView style={styles.container}>
-        <Link href="profile" dismissTo asChild>
+        <Link href="/profile" dismissTo asChild>
           <TouchableOpacity style={styles.backButton}>
             <FontAwesome name="chevron-left" size={25} color="black" />
           </TouchableOpacity>

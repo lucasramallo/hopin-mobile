@@ -2,7 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import "react-native-get-random-values";
 import { v4 as uuidv4 } from "uuid";
 import { Region } from "../components/map";
-import axios from "axios";
+import axios, { AxiosInstance } from "axios";
 
 enum Role {
   USER = "USER",
@@ -40,14 +40,13 @@ interface Driver {
   avatar?: string;
   cab?: Cab;
   trips: Trip[];
-  role?: Role;
 }
 
 interface Customer {
   id: string;
   name: string;
   email: string;
-  avatar: string;
+  avatar?: string;
 }
 
 interface Trip {
@@ -60,21 +59,78 @@ interface Trip {
   rating?: number;
 }
 
+enum TripResponseDTOMethod {
+    CREDIT_CARD,
+    CASH,
+    PIX
+}
+
+enum TripResponseDTOStatus {
+  REQUESTED,
+  ACCEPTED,
+  STARTED,
+  COMPLETED,
+  CANCELLED,
+}
+
+interface Payment {
+    id: string;
+    method: TripResponseDTOMethod;
+    amount: number;
+    createdAt: string;
+}
+
+interface TripResponseDTO {
+  id: string;
+  customer: Customer;
+  driver: Driver;
+  payment: Payment;
+  status: TripResponseDTOStatus;
+  origin: string;
+  destination: string;
+  createdAt: string;
+}
+
 const DRIVER_KEY = "@CurrentDriver";
 
 class DriverStorageService {
-  private API: string = "http://localhost:8080/api";
-  private JWTToken: string = "";
+  private API: AxiosInstance;
+
+  constructor() {
+    this.API = axios.create({
+      baseURL: "http://localhost:8080/api",
+    });
+  }
 
   async saveDriver(driver: Driver): Promise<Driver | null> {
     try {
-      driver.id = uuidv4();
-      driver.role = Role.USER;
-      const driverJson = JSON.stringify(driver);
+      const { data } = await this.API.post(
+        "/auth/driver/register",
+        {
+          name: driver.name,
+          email: driver.email,
+          password: driver.password,
+          dateOfBirth: driver.dateOfBirth,
+          model: driver.cab?.model,
+          color: driver.cab?.color,
+          plateNum: driver.cab?.plateNum,
+          bank: driver.bank,
+          bankAccount: driver.bankAccount,
+          bankBranch: driver.bankBranch,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      console.log("[ID]: ", data.id);
+      const driverJson = JSON.stringify(data);
       await AsyncStorage.setItem(DRIVER_KEY, driverJson);
-      return driver;
+      return data;
     } catch (error) {
-      console.error("Error saving driver to AsyncStorage:", error);
+      console.error("Error saving driver: ", error);
       return null;
     }
   }
@@ -103,31 +159,19 @@ class DriverStorageService {
     }
   }
 
-  async login(
-    email: string,
-    password: string
-  ): Promise<Driver | boolean | null> {
+  async login(email: string, password: string): Promise<Driver | null> {
     try {
-      const { data } = await axios.post(`${this.API}/auth/login`, {
+      const { data } = await this.API.post("/auth/login", {
         email,
         password,
       });
-      this.JWTToken = data.token;
-      return true;
-    } catch (error: any) {
-      if (!error.response) {
-        const loggedDriver = await this.getDriver();
-        if (
-          loggedDriver &&
-          loggedDriver.email === email.toLowerCase() &&
-          loggedDriver.password === password
-        ) {
-          return loggedDriver;
-        } else {
-          return null;
-        }
-      }
+      this.API.defaults.headers.common[
+        "Authorization"
+      ] = `Bearer ${data.token}`;
 
+      const res = await this.API.get(`/driver/getData/${email}`);
+      return res.data;
+    } catch (error: any) {
       if (error.response.status === 401) {
         return null;
       }
@@ -152,25 +196,48 @@ class DriverStorageService {
         throw new Error("No driver logged in");
       }
 
-      driver.trips = [...driver.trips, newTrip];
-      await this.saveDriver(driver);
+      await this.API.post(
+        `/trip/${newTrip.id}/${
+          newTrip.status === Status.COMPLETED ? "complete" : "cancel"
+        }`
+      );
     } catch (error) {
       console.error("Error adding trip to driver's history:", error);
       throw new Error("Failed to add trip");
     }
   }
 
-  async getTrips(): Promise<Trip[]> {
+  async getTrips(): Promise<TripResponseDTO[]> {
     try {
       const driver = await this.getDriver();
-      return driver?.trips || [];
+      if (!driver) {
+        throw new Error("No driver logged in");
+      }
+
+      const res = await this.API.get(`/driver/getTripsHistory`);
+      return res.data.content;
     } catch (error) {
       console.error("Error retrieving trips from AsyncStorage:", error);
       return [];
     }
   }
 
-  generateTrip(): Trip {
+  async getTripsRequests(): Promise<TripResponseDTO[]> {
+    try {
+      const driver = await this.getDriver();
+      if (!driver) {
+        throw new Error("No driver logged in");
+      }
+
+      const res = await this.API.get(`/driver/getTripsRequests/${driver.id}`);
+      return res.data.content;
+    } catch (error) {
+      console.error("Error retrieving trips from AsyncStorage:", error);
+      return [];
+    }
+  }
+
+  generateTrip(dto?: TripResponseDTO): Trip {
     const addresses: Region[] = [
       {
         name: "Rua José de Almeida, 300 - Catolé, Campina Grande",
@@ -270,15 +337,15 @@ class DriverStorageService {
     };
 
     const newTrip: Trip = {
-      id: uuidv4(),
-      customer: customer,
+      id: dto?.id || uuidv4(),
+      customer: dto?.customer || customer,
       payment: {
-        amount: randomPriceNumber,
+        amount: dto?.payment.amount || randomPriceNumber,
         currency: "BRL",
       },
       status: Status.PENDING,
-      origin: addresses[randomOriginNumber],
-      destination: addresses[randomDestinationNumber],
+      origin: {...addresses[randomOriginNumber], name: dto?.origin || addresses[randomOriginNumber].name},
+      destination: {...addresses[randomDestinationNumber], name: dto?.destination || addresses[randomDestinationNumber].name},
     };
 
     return newTrip;
@@ -286,4 +353,4 @@ class DriverStorageService {
 }
 
 export const driverStorageService = new DriverStorageService();
-export { Customer, Driver, Price, Role, Status, Trip };
+export { Customer, Driver, Price, Role, Status, Trip, TripResponseDTOStatus, TripResponseDTO };

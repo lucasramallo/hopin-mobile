@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Link } from "expo-router";
+import { Link, router } from "expo-router";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { useLocalSearchParams } from "expo-router";
 import {
   ScrollView,
   KeyboardAvoidingView,
@@ -10,6 +11,7 @@ import {
   StyleSheet,
   TextInput,
   TouchableOpacity,
+  Alert,
 } from "react-native";
 import {
   Ionicons,
@@ -20,7 +22,7 @@ import {
 import { driverStorageService, Driver } from "./service/service";
 import useStore from "./store/store";
 
-export default function Index() {
+export default function CabRegister() {
   const [model, setModel] = useState("");
   const [color, setColor] = useState("");
   const [plateNum, setPlateNum] = useState("");
@@ -29,14 +31,14 @@ export default function Index() {
   const [bankAccount, setBankAccount] = useState("");
   const [error, setError] = useState(0);
   const user = useStore((state) => state.user);
+  const driver = useLocalSearchParams();
   const setCurrentUser = useStore((state) => state.setCurrentUser);
 
   const register = async () => {
-    const driver = await driverStorageService.getDriver();
     let loggedDriver = null;
-    if (!error && driver) {
+    if (!error && user) {
       loggedDriver = await driverStorageService.saveDriver({
-        ...driver,
+        ...user,
         cab: {
           model,
           color,
@@ -44,11 +46,19 @@ export default function Index() {
         },
         bank,
         bankBranch,
-        bankAccount,
+        bankAccount
       });
     }
 
-    setCurrentUser(loggedDriver);
+    if (loggedDriver) {
+      setCurrentUser(loggedDriver);
+      router.push("/trip");
+    } else {
+      Alert.alert(
+        "Ups! Alerta de erro.",
+        "Ocorreu um erro inesperado ao tentar salvar novo usuário."
+      );
+    }
   };
 
   return (
@@ -154,11 +164,9 @@ export default function Index() {
           </View>
         </View>
 
-        <Link href="trip" asChild>
-          <TouchableOpacity style={styles.button} onPress={register}>
-            <Text style={styles.buttonText}>Finalizar</Text>
-          </TouchableOpacity>
-        </Link>
+        <TouchableOpacity style={styles.button} onPress={register}>
+          <Text style={styles.buttonText}>Finalizar</Text>
+        </TouchableOpacity>
       </View>
     </KeyboardAwareScrollView>
   );

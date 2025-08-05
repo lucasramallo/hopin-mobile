@@ -20,7 +20,7 @@ export default function Login() {
     <View style={styles.container}>
       <View style={styles.profileView}>
         {user && (
-          <Link href="editProfile" asChild>
+          <Link href="/editProfile" asChild>
             <TouchableOpacity style={styles.editButton}>
               <Text style={{ color: "#47ca6c" }}>Editar</Text>
             </TouchableOpacity>
@@ -121,4 +121,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 15,
   },
+  data: {}
 });
