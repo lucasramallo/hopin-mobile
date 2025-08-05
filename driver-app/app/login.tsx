@@ -9,7 +9,7 @@ import useStore from './store/store';
 export default function Login() {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
-	const [error, setError] = useState(0);
+	const [error, setError] = useState(false);
 	const router = useRouter();
 	const setCurrentUser = useStore((state) => state.setCurrentUser);
 
@@ -19,12 +19,12 @@ export default function Login() {
 			setCurrentUser(driver);
 			router.push('/trip');
 		} else {
-			setError(1);
+			setError(true);
 		}
 	};
 
 	useEffect(() => {
-		setError(0);
+		setError(false);
 	}, [email, password]);
 
 	return (
@@ -35,8 +35,8 @@ export default function Login() {
 			<Text style={styles.title}>Fazer login</Text>
 
 			<View style={styles.content}>
-				<View style={[styles.inputView, (error === 1) ? styles.inputViewError : {}]}>
-					<View style={[styles.iconView, (error === 1) ? styles.iconViewError : {}]}>
+				<View style={[styles.inputView, error ? styles.inputViewError : {}]}>
+					<View style={[styles.iconView, error ? styles.iconViewError : {}]}>
 						<Ionicons name="mail-sharp" size={20} color="black" />
 					</View>
 					<TextInput
@@ -45,8 +45,8 @@ export default function Login() {
 						onChangeText={(value) => setEmail(value.toLowerCase())}
 						style={styles.input} />
 				</View>
-				<View style={[styles.inputView, (error === 1) ? styles.inputViewError : {}]}>
-					<View style={[styles.iconView, (error === 1) ? styles.iconViewError : {}]}>
+				<View style={[styles.inputView, error ? styles.inputViewError : {}]}>
+					<View style={[styles.iconView, error ? styles.iconViewError : {}]}>
 						<FontAwesome name="lock" size={20} color="black" />
 					</View>
 					<TextInput
@@ -57,7 +57,7 @@ export default function Login() {
 				</View>
 			</View>
 
-			{error === 1 && <View style={styles.warnView}>
+			{error && <View style={styles.warnView}>
 				<Text style={styles.warnText}>Email ou senha incorretos</Text>
 			</View>}
 
@@ -65,7 +65,7 @@ export default function Login() {
 				<TouchableOpacity style={styles.button} onPress={login}>
 					<Text style={styles.buttonText}>Entrar</Text>
 				</TouchableOpacity>
-				<Link href="register" dismissTo asChild>
+				<Link href="/register" dismissTo asChild>
 					<TouchableOpacity>
 						<Text>Criar conta</Text>
 					</TouchableOpacity>

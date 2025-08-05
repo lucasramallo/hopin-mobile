@@ -32,14 +32,15 @@
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
-        },
+        }
       ],
-	    [
+      [
         "expo-image-picker",
         {
           "photosPermission": "O app precisa de acesso às suas fotos para personalização do seu perfil."
         }
-      ]  
+      ],
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
